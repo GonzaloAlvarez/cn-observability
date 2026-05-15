@@ -1,0 +1,4 @@
+.env
+certs/root_ca.crt
+config/promtail/promtail.yml
+config/alertmanager/alertmanager.yml

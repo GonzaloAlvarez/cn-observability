@@ -1,0 +1,39 @@
+global:
+  scrape_interval: 15s
+  external_labels:
+    site: kaiser
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ["alertmanager:9093"]
+
+rule_files:
+  - /etc/prometheus/alerts.yml
+
+scrape_configs:
+  # In-network targets are reachable by their compose service name (cn-observability default network).
+  - job_name: prometheus
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  - job_name: alertmanager
+    static_configs:
+      - targets: ["alertmanager:9093"]
+
+  - job_name: grafana
+    static_configs:
+      - targets: ["grafana:3000"]
+
+  - job_name: loki
+    static_configs:
+      - targets: ["loki:3100"]
+
+  # node-exporter runs `network_mode: host` so it's reachable from inside the
+  # bridge via the host-gateway address. compose adds the alias automatically
+  # when we set extra_hosts: ["host.docker.internal:host-gateway"].
+  - job_name: node-exporter
+    static_configs:
+      - targets: ["host.docker.internal:9100"]
+        labels:
+          host: kaiser
