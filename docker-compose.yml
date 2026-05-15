@@ -43,7 +43,10 @@ services:
       - "--path.procfs=/host/proc"
       - "--path.sysfs=/host/sys"
       - "--path.rootfs=/rootfs"
-      - "--web.listen-address=127.0.0.1:9100"   # LAN-only, only Prometheus probes it
+      # Bind on all host interfaces (including the docker bridge gateway)
+      # so the Prometheus container can scrape via `host.docker.internal:9100`.
+      # External access on :9100 is blocked by UFW (only 22/53/80/443 are open).
+      - "--web.listen-address=:9100"
       - "--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)"
     volumes:
       - /proc:/host/proc:ro
