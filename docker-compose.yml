@@ -3,7 +3,9 @@ services:
   prometheus:
     image: prom/prometheus:v2.55.0
     ports:
-      - "127.0.0.1:9090:9090"
+      # Host port 9091, not 9090 — kaiser's PCP pmproxy.service binds 9090
+      # on all interfaces and we can't share. Internal container port stays 9090.
+      - "127.0.0.1:9091:9090"
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
       - "--storage.tsdb.path=/prometheus"
