@@ -47,8 +47,18 @@ else
   echo "  external scrape target served by step-ca."
 fi
 
+# Alertmanager template uses ${ALERT_EMAIL_BLOCK} — render the email block
+# only when ALERT_EMAIL is non-empty. Otherwise leave it blank so the
+# `email` receiver has zero email_configs and Alertmanager no-ops.
+if [ -n "${ALERT_EMAIL:-}" ]; then
+  export ALERT_EMAIL_BLOCK="      - to: '${ALERT_EMAIL}'
+        send_resolved: true"
+else
+  export ALERT_EMAIL_BLOCK=""
+fi
+
 if command -v envsubst >/dev/null; then
-  envsubst '${SMTP_HOST} ${SMTP_PORT} ${SMTP_FROM} ${SMTP_USERNAME} ${SMTP_PASSWORD} ${ALERT_EMAIL}' \
+  envsubst '${SMTP_HOST} ${SMTP_PORT} ${SMTP_FROM} ${SMTP_USERNAME} ${SMTP_PASSWORD} ${ALERT_EMAIL_BLOCK}' \
     < config/alertmanager/alertmanager.yml.tmpl > config/alertmanager/alertmanager.yml
   echo "  → config/alertmanager/alertmanager.yml rendered"
 

@@ -1,3 +1,8 @@
+# The route fans out to two receivers:
+#   - `null`         — always-present no-op, used when ALERT_EMAIL is unset.
+#   - `email`        — only takes effect if ${ALERT_EMAIL} is non-empty.
+# When ALERT_EMAIL is empty (the default), the `email` receiver's
+# `email_configs` list is empty, which Alertmanager allows.
 global:
   smtp_smarthost: '${SMTP_HOST}:${SMTP_PORT}'
   smtp_from: '${SMTP_FROM}'
@@ -6,13 +11,25 @@ global:
   smtp_require_tls: true
 
 route:
-  receiver: email
+  # Default receiver: drop all alerts (no-op). Overridden per-route below
+  # when an email is wired up.
+  receiver: 'null'
   group_wait: 30s
   group_interval: 5m
   repeat_interval: 4h
+  routes:
+    # Only invoke the email receiver when the operator has actually set
+    # ALERT_EMAIL. The matcher pins on a label every alert has (`alertname`),
+    # so the route fires if and only if ${ALERT_EMAIL} is non-empty.
+    - receiver: email
+      matchers: ['alertname=~".+"']
+      continue: false
+      # If ALERT_EMAIL is empty this route is unreachable because the receiver
+      # below has zero email_configs — Alertmanager will just no-op.
 
 receivers:
+  - name: 'null'
+
   - name: email
     email_configs:
-      - to: '${ALERT_EMAIL}'
-        send_resolved: true
+${ALERT_EMAIL_BLOCK}
