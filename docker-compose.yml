@@ -68,6 +68,13 @@ services:
   promtail:
     image: grafana/promtail:3.4.2
     command: [ "-config.file=/etc/promtail/promtail.yml" ]
+    ports:
+      # Syslog receiver for LAN appliances that can't run promtail
+      # natively (e.g. raidnas via DSM Log Center). Bound to kaiser's
+      # LAN IP only — listening on all interfaces would conflict with
+      # the default-deny perimeter posture. UFW gates 1514/tcp to the
+      # raidnas subnet 10.120.26.0/24.
+      - "${KAISER_IP}:1514:1514/tcp"
     volumes:
       - "./config/promtail/promtail.yml:/etc/promtail/promtail.yml:ro"
       - /var/run/docker.sock:/var/run/docker.sock:ro
