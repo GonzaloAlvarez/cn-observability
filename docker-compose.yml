@@ -85,6 +85,20 @@ services:
       - loki
     restart: unless-stopped
 
+  # ── exporters ────────────────────────────────────────────────────────────
+  # SNMP for raidnas — scraped directly off the LAN (no tailnet needed).
+  # Mirrors the VPS snmp-exporter so kaiser's Grafana can render the same
+  # storage dashboard as the VPS one.
+  snmp-exporter:
+    image: prom/snmp-exporter:v0.27.0
+    command:
+      - "--config.file=/etc/snmp_exporter/snmp.yml"
+    volumes:
+      # snmp.yml is rendered by setup.sh (envsubst bakes in the
+      # community string — snmp_exporter doesn't honor ${VAR}).
+      - "./config/snmp-exporter/snmp.yml:/etc/snmp_exporter/snmp.yml:ro"
+    restart: unless-stopped
+
   # ── viz ──────────────────────────────────────────────────────────────────
   grafana:
     image: grafana/grafana:11.2.0

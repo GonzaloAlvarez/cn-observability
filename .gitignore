@@ -2,3 +2,4 @@
 certs/root_ca.crt
 config/promtail/promtail.yml
 config/alertmanager/alertmanager.yml
+config/snmp-exporter/snmp.yml

@@ -36,7 +36,7 @@ set -o allexport
 source .env
 set +o allexport
 
-mkdir -p certs config/alertmanager config/promtail
+mkdir -p certs config/alertmanager config/promtail config/snmp-exporter
 
 echo "Fetching step-ca root CA from http://${PKI_IP}/cert/ca.crt ..."
 if curl -sfL -o certs/root_ca.crt "http://${PKI_IP}/cert/ca.crt"; then
@@ -65,6 +65,14 @@ if command -v envsubst >/dev/null; then
   envsubst '${LAN_DOMAIN}' \
     < config/promtail/promtail.yml.tmpl > config/promtail/promtail.yml
   echo "  → config/promtail/promtail.yml rendered"
+
+  # snmp_exporter doesn't honor env var interpolation — bake the
+  # community string in.
+  if [ -n "${SNMP_RAIDNAS_COMMUNITY:-}" ]; then
+    envsubst '${SNMP_RAIDNAS_COMMUNITY}' \
+      < config/snmp-exporter/snmp.yml.tmpl > config/snmp-exporter/snmp.yml
+    echo "  → config/snmp-exporter/snmp.yml rendered"
+  fi
 else
   echo "  WARNING: envsubst not found; install gettext."
 fi
