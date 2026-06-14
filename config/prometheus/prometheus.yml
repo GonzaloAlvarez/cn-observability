@@ -158,26 +158,28 @@ scrape_configs:
         labels:
           host: kaiser
 
-  # pfSense (LAN gateway) — SNMP via direct LAN access. Same indirection
-  # pattern as raidnas. NOTE: requires SNMP enabled on pfSense (Services →
-  # SNMP) and SNMP_PFSENSE_COMMUNITY set in .env. Until then this job will
-  # show DOWN — that's the expected state and PrometheusTargetDown will fire.
-  - job_name: pfsense-snmp
-    metrics_path: /snmp
-    params:
-      module: [if_mib]
-      auth: [pfsense_v2]
-    static_configs:
-      - targets: ["10.1.0.1"]
-        labels:
-          host: pfsense
-    relabel_configs:
-      - source_labels: [__address__]
-        target_label: __param_target
-      - source_labels: [__param_target]
-        target_label: instance
-      - target_label: __address__
-        replacement: snmp-exporter:9116
+  # pfSense (LAN gateway) — SNMP via direct LAN access. Disabled until SNMP
+  # is enabled on pfSense (Services → SNMP) AND SNMP_PFSENSE_COMMUNITY is
+  # set in .env. To re-enable: set the community, uncomment the job below,
+  # rerun setup.sh, and `docker compose up -d --force-recreate prometheus`.
+  # The if_mib module, pfsense_v2 auth block, and pfsense-overview dashboard
+  # remain in place ready to receive data.
+  # - job_name: pfsense-snmp
+  #   metrics_path: /snmp
+  #   params:
+  #     module: [if_mib]
+  #     auth: [pfsense_v2]
+  #   static_configs:
+  #     - targets: ["10.1.0.1"]
+  #       labels:
+  #         host: pfsense
+  #   relabel_configs:
+  #     - source_labels: [__address__]
+  #       target_label: __param_target
+  #     - source_labels: [__param_target]
+  #       target_label: instance
+  #     - target_label: __address__
+  #       replacement: snmp-exporter:9116
 
   # raidnas (Synology DS418) — SNMP via direct LAN access. Same indirection
   # pattern as the VPS scrape: target = raidnas IP, __address__ rewritten
