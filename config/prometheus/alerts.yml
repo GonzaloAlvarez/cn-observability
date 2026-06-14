@@ -47,3 +47,31 @@ groups:
         annotations:
           summary: "kaiser disk almost full"
           description: "/ on kaiser is {{ $value | printf \"%.1f\" }}% full — services may fail."
+
+  # Synthetic probes — every LAN endpoint blackbox-exporter watches.
+  #
+  # Note on cert-expiry thresholds: step-ca issues 24h leaf certs and Traefik
+  # renews them daily, so cert_remaining oscillates between ~0h and ~24h on
+  # healthy targets. A static "<7d / <14d" warning would fire continuously.
+  # We rely on CertExpired (post-expiry) + BlackboxProbeFailed (handshake
+  # rejection) to catch step-ca renewal-pipeline breakage. Slice 3 will add
+  # a step-ca /metrics-based "no recent renewal" alert for earlier warning.
+  - name: synthetic
+    rules:
+      - alert: BlackboxProbeFailed
+        expr: probe_success == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Probe failed: {{ $labels.instance }}"
+          description: "Blackbox probe to {{ $labels.instance }} (job: {{ $labels.job }}) has been failing for more than 5 minutes."
+
+      - alert: CertExpired
+        expr: probe_ssl_earliest_cert_expiry > 0 and probe_ssl_earliest_cert_expiry - time() <= 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "TLS cert EXPIRED: {{ $labels.instance }}"
+          description: "TLS certificate for {{ $labels.instance }} is past its NotAfter — clients will refuse the handshake."

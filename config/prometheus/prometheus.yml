@@ -38,6 +38,73 @@ scrape_configs:
         labels:
           host: kaiser
 
+  # Blackbox HTTPS probes — every LAN endpoint that should be reachable from
+  # kaiser's network position. probe_ssl_earliest_cert_expiry on these targets
+  # is what feeds CertExpired in alerts.yml.
+  - job_name: blackbox-https
+    metrics_path: /probe
+    params:
+      module: [lan_https]
+    scrape_interval: 60s
+    static_configs:
+      - targets:
+          # cn-vaultwarden + cn-ha-sidecar + cn-pki LAN ingresses
+          - https://passwords.lan
+          - https://homeiot.lan
+          - https://pki.lan
+          # step-ca's own ACME directory — separate cert (CN=Step Online CA),
+          # exercises the same chain a Traefik client uses to renew.
+          - https://pki.lan:9000/acme/acme/directory
+          # *.kaiser.lan — every service behind cn-home's traefik-lan
+          - https://home.kaiser.lan
+          - https://grafana.kaiser.lan
+          - https://prometheus.kaiser.lan
+          - https://alertmanager.kaiser.lan
+          - https://loki.kaiser.lan
+          - https://portainer.kaiser.lan
+          - https://raidnas.kaiser.lan
+          - https://torrent.kaiser.lan
+          - https://sonarr.kaiser.lan
+          - https://radarr.kaiser.lan
+          - https://prowlarr.kaiser.lan
+          - https://lidarr.kaiser.lan
+          - https://readarr.kaiser.lan
+          - https://jellyfin.kaiser.lan
+          - https://roms.kaiser.lan
+          - https://fitness.kaiser.lan
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
+
+  # Blackbox HTTP probes — plain-HTTP endpoints.
+  - job_name: blackbox-http
+    metrics_path: /probe
+    params:
+      module: [lan_http]
+    scrape_interval: 60s
+    static_configs:
+      - targets:
+          # step-ca CA bootstrap URL (the one used to install trust in iOS etc).
+          - http://pki.lan/cert/ca.crt
+          # k3s LAN ingresses (plain HTTP — TLS lives on the tailnet side).
+          - http://longhorn.k8s.lan
+          - http://cluster.k8s.lan
+          - http://filemanager.k8s.lan
+          - http://freshrss.k8s.lan
+          - http://netbox.k8s.lan
+          - http://hello.k8s.lan
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
+
   # raidnas (Synology DS418) — SNMP via direct LAN access. Same indirection
   # pattern as the VPS scrape: target = raidnas IP, __address__ rewritten
   # to the snmp-exporter sidecar. `auth` query parameter selects the

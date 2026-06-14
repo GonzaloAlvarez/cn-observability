@@ -1,0 +1,29 @@
+modules:
+  # HTTPS endpoint backed by a step-ca-issued cert. Every LAN HTTPS service
+  # in this homelab falls into this bucket (cn-home + cn-vaultwarden +
+  # cn-ha-sidecar + cn-pki all serve step-ca leafs). LE wildcard certs live
+  # on the tailnet side and aren't probed from kaiser.
+  lan_https:
+    prober: http
+    timeout: 8s
+    http:
+      preferred_ip_protocol: "ip4"
+      method: GET
+      # Most LAN services return 200 on /; some return 302 (login redirect),
+      # 401 (auth required), or 404 (no root handler). All four mean "service
+      # is up." Only no-response or 5xx mean "down."
+      valid_status_codes: [200, 201, 204, 301, 302, 304, 401, 403, 404]
+      fail_if_not_ssl: true
+      tls_config:
+        ca_file: /etc/blackbox_exporter/root_ca.crt
+        insecure_skip_verify: false
+
+  # Plain HTTP. Used for the step-ca CA bootstrap URL and k3s LAN ingresses
+  # (which expose plain HTTP — TLS is tailnet-side via traefik-lab).
+  lan_http:
+    prober: http
+    timeout: 8s
+    http:
+      preferred_ip_protocol: "ip4"
+      method: GET
+      valid_status_codes: [200, 201, 204, 301, 302, 304, 401, 403, 404]

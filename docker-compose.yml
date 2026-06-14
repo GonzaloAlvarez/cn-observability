@@ -86,6 +86,23 @@ services:
     restart: unless-stopped
 
   # ── exporters ────────────────────────────────────────────────────────────
+  # Blackbox synthetic probes — HTTP(S) + TLS expiry on every LAN endpoint.
+  # The user's recent 9-day step-ca outage manifested as expired leaf certs
+  # on passwords.lan and homeiot.lan, undetected until iOS rejected them.
+  # CertExpired + BlackboxProbeFailed in config/prometheus/alerts.yml are the
+  # specific signals that would have caught it.
+  blackbox-exporter:
+    image: prom/blackbox-exporter:v0.25.0
+    command:
+      - "--config.file=/etc/blackbox_exporter/config.yml"
+    volumes:
+      - "./config/blackbox/blackbox.yml:/etc/blackbox_exporter/config.yml:ro"
+      # Mount the step-ca root CA so HTTPS probes can verify *.lan + *.kaiser.lan
+      # certs without insecure_skip_verify. setup.sh keeps certs/root_ca.crt fresh
+      # by fetching http://pki.lan/cert/ca.crt on every run.
+      - "./certs/root_ca.crt:/etc/blackbox_exporter/root_ca.crt:ro"
+    restart: unless-stopped
+
   # SNMP for raidnas — scraped directly off the LAN (no tailnet needed).
   # Mirrors the VPS snmp-exporter so kaiser's Grafana can render the same
   # storage dashboard as the VPS one.
