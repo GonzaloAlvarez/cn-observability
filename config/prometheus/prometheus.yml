@@ -105,6 +105,34 @@ scrape_configs:
       - target_label: __address__
         replacement: blackbox-exporter:9115
 
+  # pki.lan host metrics + service metrics. Reaches 10.0.0.192 via pfSense
+  # routing (cross-subnet). cn-pki's node-exporter is on host network; its
+  # Traefik publishes /metrics on :8082; step-ca publishes /metrics on :9110
+  # (the latter requires `metrics: {address: ":9110"}` in ca.json — see the
+  # cn-pki docker-compose.yml comment).
+  - job_name: pki-node
+    scrape_interval: 30s
+    static_configs:
+      - targets: ["10.0.0.192:9100"]
+        labels:
+          host: pki
+
+  - job_name: pki-traefik
+    scrape_interval: 30s
+    static_configs:
+      - targets: ["10.0.0.192:8082"]
+        labels:
+          host: pki
+          stack: cn-pki
+
+  - job_name: pki-stepca
+    scrape_interval: 30s
+    static_configs:
+      - targets: ["10.0.0.192:9110"]
+        labels:
+          host: pki
+          stack: cn-pki
+
   # SMART data for kaiser's disks via smartctl-exporter sidecar.
   - job_name: kaiser-smart
     scrape_interval: 60s

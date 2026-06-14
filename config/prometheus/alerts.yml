@@ -88,6 +88,47 @@ groups:
           summary: "SMART status FAILED: {{ $labels.device }} on kaiser"
           description: "{{ $labels.device }} ({{ $labels.model_name }}) is reporting SMART status FAILED — replace before it dies."
 
+  # pki.lan host alerts — mirror the kaiser-host thresholds, scoped to the
+  # pki-node instance (10.0.0.192:9100). Catches CPU/memory/disk-space issues
+  # on the Pi 5 running cn-pki before step-ca starts misbehaving.
+  - name: pki-host
+    rules:
+      - alert: PkiHighCPU
+        expr: (1 - avg by (instance)(rate(node_cpu_seconds_total{instance="10.0.0.192:9100",mode="idle"}[5m]))) * 100 > 90
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "pki.lan CPU usage is high"
+          description: "CPU on pki.lan has been above 90% for 5m (current: {{ $value | printf \"%.1f\" }}%)."
+
+      - alert: PkiHighMemory
+        expr: (1 - node_memory_MemAvailable_bytes{instance="10.0.0.192:9100"} / node_memory_MemTotal_bytes{instance="10.0.0.192:9100"}) * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "pki.lan memory usage is high"
+          description: "Memory on pki.lan has been above 85% for 5m (current: {{ $value | printf \"%.1f\" }}%)."
+
+      - alert: PkiDiskSpaceLow
+        expr: (1 - node_filesystem_avail_bytes{instance="10.0.0.192:9100",mountpoint="/"} / node_filesystem_size_bytes{instance="10.0.0.192:9100",mountpoint="/"}) * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "pki.lan disk space is running low"
+          description: "/ on pki.lan is {{ $value | printf \"%.1f\" }}% full."
+
+      - alert: PkiDiskSpaceCritical
+        expr: (1 - node_filesystem_avail_bytes{instance="10.0.0.192:9100",mountpoint="/"} / node_filesystem_size_bytes{instance="10.0.0.192:9100",mountpoint="/"}) * 100 > 95
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "pki.lan disk almost full"
+          description: "/ on pki.lan is {{ $value | printf \"%.1f\" }}% full — step-ca will start failing soon."
+
   # Synthetic probes — every LAN endpoint blackbox-exporter watches.
   #
   # Note on cert-expiry thresholds: step-ca issues 24h leaf certs and Traefik
