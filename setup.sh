@@ -1,11 +1,32 @@
 #!/bin/bash
 # cn-observability/setup.sh — same shape as cn-home/setup.sh.
+#
+# Flags:
+#   --core   Harvest SMTP_HOST/PORT/FROM/USERNAME/PASSWORD/ALERT_EMAIL from
+#            hs.gn.al:/opt/cloudnet/.env so kaiser Alertmanager emails the
+#            same destination as the VPS one. Mirrors cn-fitness --core.
+#
 #   1. Interactive .env generation from .env.example.
-#   2. Fetch step-ca root CA over plain HTTP.
-#   3. Render Alertmanager + Promtail templates with envsubst.
+#   2. (--core) harvest SMTP/ALERT_EMAIL from hs.gn.al.
+#   3. Fetch step-ca root CA over plain HTTP.
+#   4. Render Alertmanager + Promtail templates with envsubst.
 
 set -euo pipefail
 cd "$(dirname "$0")"
+
+CORE_ONLY=0
+case "${1:-}" in
+  --core) CORE_ONLY=1 ;;
+  -h|--help)
+    sed -n '/^#!/d; /^[^#]/q; s/^# \{0,1\}//p' "$0"
+    exit 0
+    ;;
+  "") ;;
+  *)
+    echo "unknown argument: $1 (try --help)" >&2
+    exit 2
+    ;;
+esac
 
 if [ ! -f .env ]; then
   > .env
@@ -29,6 +50,33 @@ if [ ! -f .env ]; then
     fi
   done < .env.example
   echo ""
+fi
+
+if (( CORE_ONLY == 1 )); then
+  echo "Harvesting SMTP/ALERT_EMAIL from hs.gn.al:/opt/cloudnet/.env ..."
+  SSH_OPTS=(-o BatchMode=yes -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -l gonzalo)
+  for p in ~/.ssh/main_private_key.pem ~/.ssh/gonzalo_main_private_key.pem; do
+    [[ -f "$p" ]] && { SSH_OPTS+=(-i "$p"); break; }
+  done
+  tmp=$(mktemp)
+  trap "rm -f '$tmp'" EXIT
+  if ! ssh "${SSH_OPTS[@]}" hs.gn.al \
+       "grep -E '^(SMTP_HOST|SMTP_PORT|SMTP_FROM|SMTP_USERNAME|SMTP_PASSWORD|ALERT_EMAIL)=' /opt/cloudnet/.env" \
+       > "$tmp"; then
+    echo "  ERROR: ssh hs.gn.al failed — is the VPS up and your key authorized?" >&2
+    exit 1
+  fi
+  [[ -s "$tmp" ]] || { echo "  ERROR: no matching keys found on hs.gn.al" >&2; exit 1; }
+  while IFS='=' read -r k v; do
+    [[ -z "$k" ]] && continue
+    esc=$(printf '%s\n' "$v" | sed -e 's/[\/&]/\\&/g')
+    if grep -qE "^${k}=" .env; then
+      sed -i.bak "s/^${k}=.*/${k}=${esc}/" .env && rm -f .env.bak
+    else
+      printf '%s=%s\n' "$k" "$v" >> .env
+    fi
+    echo "  → ${k}"
+  done < "$tmp"
 fi
 
 set -o allexport
