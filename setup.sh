@@ -114,10 +114,13 @@ if command -v envsubst >/dev/null; then
     < config/promtail/promtail.yml.tmpl > config/promtail/promtail.yml
   echo "  → config/promtail/promtail.yml rendered"
 
-  # snmp_exporter doesn't honor env var interpolation — bake the
-  # community string in.
+  # snmp_exporter doesn't honor env var interpolation — bake both community
+  # strings in. raidnas is required; pfsense is optional (auth block stays
+  # in the rendered file but with an empty community → snmp_exporter just
+  # returns auth errors for pfsense-snmp, which surfaces as DOWN in
+  # Prometheus until the operator wires it up).
   if [ -n "${SNMP_RAIDNAS_COMMUNITY:-}" ]; then
-    envsubst '${SNMP_RAIDNAS_COMMUNITY}' \
+    envsubst '${SNMP_RAIDNAS_COMMUNITY} ${SNMP_PFSENSE_COMMUNITY}' \
       < config/snmp-exporter/snmp.yml.tmpl > config/snmp-exporter/snmp.yml
     echo "  → config/snmp-exporter/snmp.yml rendered"
   fi

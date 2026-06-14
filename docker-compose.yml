@@ -103,6 +103,21 @@ services:
       - "./certs/root_ca.crt:/etc/blackbox_exporter/root_ca.crt:ro"
     restart: unless-stopped
 
+  # SMART data for kaiser's disks (1× WDC HDD on /dev/sda + 1× Samsung NVMe
+  # on /dev/nvme0n1). privileged + /dev mount give the exporter the access
+  # smartctl needs to read SMART pages off the controllers. Listens on :9633.
+  smartctl-exporter:
+    image: quay.io/prometheuscommunity/smartctl-exporter:v0.13.0
+    privileged: true
+    user: root
+    volumes:
+      - /dev:/hostdev:ro
+    command:
+      - "--smartctl.path=/usr/sbin/smartctl"
+      - "--smartctl.interval=120s"
+      - "--web.listen-address=:9633"
+    restart: unless-stopped
+
   # SNMP for raidnas — scraped directly off the LAN (no tailnet needed).
   # Mirrors the VPS snmp-exporter so kaiser's Grafana can render the same
   # storage dashboard as the VPS one.

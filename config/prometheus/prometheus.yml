@@ -105,6 +105,35 @@ scrape_configs:
       - target_label: __address__
         replacement: blackbox-exporter:9115
 
+  # SMART data for kaiser's disks via smartctl-exporter sidecar.
+  - job_name: kaiser-smart
+    scrape_interval: 60s
+    static_configs:
+      - targets: ["smartctl-exporter:9633"]
+        labels:
+          host: kaiser
+
+  # pfSense (LAN gateway) — SNMP via direct LAN access. Same indirection
+  # pattern as raidnas. NOTE: requires SNMP enabled on pfSense (Services →
+  # SNMP) and SNMP_PFSENSE_COMMUNITY set in .env. Until then this job will
+  # show DOWN — that's the expected state and PrometheusTargetDown will fire.
+  - job_name: pfsense-snmp
+    metrics_path: /snmp
+    params:
+      module: [if_mib]
+      auth: [pfsense_v2]
+    static_configs:
+      - targets: ["10.1.0.1"]
+        labels:
+          host: pfsense
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: snmp-exporter:9116
+
   # raidnas (Synology DS418) — SNMP via direct LAN access. Same indirection
   # pattern as the VPS scrape: target = raidnas IP, __address__ rewritten
   # to the snmp-exporter sidecar. `auth` query parameter selects the

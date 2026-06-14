@@ -1,0 +1,143 @@
+{
+  "uid": "pfsense-overview",
+  "title": "pfSense overview (SNMP)",
+  "tags": ["pfsense", "homelab", "snmp"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "30s",
+  "time": { "from": "now-3h", "to": "now" },
+  "templating": { "list": [] },
+  "annotations": { "list": [] },
+  "panels": [
+    {
+      "id": 1,
+      "type": "row",
+      "title": "At a glance",
+      "gridPos": { "x": 0, "y": 0, "w": 24, "h": 1 },
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "SNMP up",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 0, "y": 1, "w": 8, "h": 4 },
+      "targets": [
+        { "expr": "up{job=\"pfsense-snmp\"}", "refId": "A", "instant": true }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "mappings": [
+            { "type": "value", "options": { "0": { "text": "DOWN", "color": "red" }, "1": { "text": "UP", "color": "green" } } }
+          ],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "red", "value": null }, { "color": "green", "value": 1 }] }
+        }
+      },
+      "options": { "colorMode": "background", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false } }
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Uptime",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 8, "y": 1, "w": 8, "h": 4 },
+      "targets": [
+        { "expr": "sysUpTime{job=\"pfsense-snmp\"} / 100", "refId": "A", "instant": true }
+      ],
+      "fieldConfig": { "defaults": { "unit": "s" } },
+      "options": { "colorMode": "background", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false } }
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Interfaces UP",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 16, "y": 1, "w": 8, "h": 4 },
+      "targets": [
+        { "expr": "count(ifOperStatus{job=\"pfsense-snmp\"} == 1)", "refId": "A", "instant": true }
+      ],
+      "fieldConfig": { "defaults": { "unit": "none" } },
+      "options": { "colorMode": "background", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false } }
+    },
+    {
+      "id": 10,
+      "type": "row",
+      "title": "Per-interface state",
+      "gridPos": { "x": 0, "y": 5, "w": 24, "h": 1 },
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "id": 11,
+      "type": "table",
+      "title": "Interface oper status",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 0, "y": 6, "w": 12, "h": 10 },
+      "targets": [
+        { "expr": "ifOperStatus{job=\"pfsense-snmp\"}", "refId": "A", "instant": true, "format": "table" }
+      ],
+      "transformations": [
+        { "id": "organize", "options": { "excludeByName": { "Time": true, "__name__": true, "job": true, "host": true, "instance": true }, "indexByName": { "ifName": 0, "ifIndex": 1, "Value": 2 } } }
+      ],
+      "fieldConfig": {
+        "defaults": { "custom": { "align": "left" } },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Value" },
+            "properties": [
+              { "id": "mappings", "value": [{ "type": "value", "options": { "1": { "text": "up", "color": "green" }, "2": { "text": "down", "color": "red" }, "3": { "text": "testing", "color": "orange" } } }] },
+              { "id": "custom.cellOptions", "value": { "type": "color-background" } }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 12,
+      "type": "table",
+      "title": "Interface errors (rate /min)",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 12, "y": 6, "w": 12, "h": 10 },
+      "targets": [
+        { "expr": "rate(ifInErrors{job=\"pfsense-snmp\"}[5m]) * 60", "refId": "in", "instant": true, "format": "table", "legendFormat": "in" },
+        { "expr": "rate(ifOutErrors{job=\"pfsense-snmp\"}[5m]) * 60", "refId": "out", "instant": true, "format": "table", "legendFormat": "out" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short", "decimals": 2, "custom": { "align": "left" } } }
+    },
+    {
+      "id": 20,
+      "type": "row",
+      "title": "Throughput",
+      "gridPos": { "x": 0, "y": 16, "w": 24, "h": 1 },
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "id": 21,
+      "type": "timeseries",
+      "title": "Interface RX bps",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 0, "y": 17, "w": 12, "h": 8 },
+      "targets": [
+        { "expr": "rate(ifHCInOctets{job=\"pfsense-snmp\"}[5m]) * 8", "refId": "A", "legendFormat": "{{ifName}}" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "bps" } },
+      "options": { "legend": { "showLegend": true, "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max"] } }
+    },
+    {
+      "id": 22,
+      "type": "timeseries",
+      "title": "Interface TX bps",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 12, "y": 17, "w": 12, "h": 8 },
+      "targets": [
+        { "expr": "rate(ifHCOutOctets{job=\"pfsense-snmp\"}[5m]) * 8", "refId": "A", "legendFormat": "{{ifName}}" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "bps" } },
+      "options": { "legend": { "showLegend": true, "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max"] } }
+    }
+  ]
+}

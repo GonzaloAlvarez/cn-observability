@@ -1,6 +1,10 @@
 groups:
   - name: services
     rules:
+      # Generic up==0 alarm — covers every scrape job (mirror of the VPS
+      # alert in cn-root-docker/tailnet/prometheus/alerts.yml::PrometheusTargetDown).
+      # The `job` label propagates so each Down target paths through the
+      # email receiver as its own alert.
       - alert: PrometheusTargetDown
         expr: up == 0
         for: 2m
@@ -9,6 +13,30 @@ groups:
         annotations:
           summary: "Prometheus target {{ $labels.job }} is down"
           description: "Scrape target {{ $labels.instance }} (job: {{ $labels.job }}) has been unreachable for more than 2 minutes."
+
+      - alert: AlertmanagerDown
+        # Alertmanager not reachable from Prometheus. Self-monitoring: if AM
+        # itself is down, this rule can't deliver — but the failure shows up
+        # on the synthetic-checks dashboard and in `up` queries.
+        expr: up{job="alertmanager"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Alertmanager on kaiser is down"
+          description: "kaiser Alertmanager (job=alertmanager) hasn't been scrapeable for 2 minutes — no alerts will deliver until it's back."
+
+      - alert: LokiIngestionStalled
+        # Loki accepts pushes but isn't ingesting anything. Catches a stuck
+        # ingester / a wedged write path. We expect >0 streams created per
+        # minute on a healthy kaiser (docker container logs + journal).
+        expr: rate(loki_distributor_lines_received_total[10m]) == 0
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Loki has not ingested any log lines in 15 minutes"
+          description: "kaiser Loki distributor has received zero lines for 15m — promtail may be wedged or Loki's write path is broken."
 
   - name: kaiser-host
     rules:
@@ -47,6 +75,18 @@ groups:
         annotations:
           summary: "kaiser disk almost full"
           description: "/ on kaiser is {{ $value | printf \"%.1f\" }}% full — services may fail."
+
+      # SMART data via smartctl-exporter. kaiser has 1× WDC HDD (sda) + 1×
+      # Samsung NVMe (nvme0n1); both are sampled. smartctl_device_smart_status
+      # is 1 when the drive reports PASSED, 0 on FAILED.
+      - alert: SmartFailingDrive
+        expr: smartctl_device_smart_status == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "SMART status FAILED: {{ $labels.device }} on kaiser"
+          description: "{{ $labels.device }} ({{ $labels.model_name }}) is reporting SMART status FAILED — replace before it dies."
 
   # Synthetic probes — every LAN endpoint blackbox-exporter watches.
   #
