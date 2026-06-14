@@ -125,13 +125,12 @@ scrape_configs:
           host: pki
           stack: cn-pki
 
-  - job_name: pki-stepca
-    scrape_interval: 30s
-    static_configs:
-      - targets: ["10.0.0.192:9110"]
-        labels:
-          host: pki
-          stack: cn-pki
+  # pki-stepca DEFERRED — step-ca v0.30.2's metrics:{address} config block
+  # is silently ignored (no listener inside the container, /metrics returns
+  # 404 on the main port). Until upstream sorts this out (or we figure out
+  # the right config shape), step-ca health is observed via the blackbox
+  # ACME-directory probe `https://pki.lan:9000/acme/acme/directory` already
+  # configured in blackbox-https.
 
   # SMART data for kaiser's disks via smartctl-exporter sidecar.
   - job_name: kaiser-smart

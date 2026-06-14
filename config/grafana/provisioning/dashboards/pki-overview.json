@@ -75,11 +75,11 @@
     {
       "id": 5,
       "type": "stat",
-      "title": "step-ca up",
+      "title": "step-ca ACME up",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "gridPos": { "x": 18, "y": 1, "w": 6, "h": 5 },
       "targets": [
-        { "expr": "up{job=\"pki-stepca\"}", "refId": "A", "instant": true }
+        { "expr": "probe_success{instance=\"https://pki.lan:9000/acme/acme/directory\"}", "refId": "A", "instant": true }
       ],
       "fieldConfig": {
         "defaults": {
@@ -123,7 +123,7 @@
     {
       "id": 20,
       "type": "row",
-      "title": "step-ca",
+      "title": "step-ca (via synthetic probes)",
       "gridPos": { "x": 0, "y": 15, "w": 24, "h": 1 },
       "collapsed": false,
       "panels": []
@@ -131,24 +131,24 @@
     {
       "id": 21,
       "type": "timeseries",
-      "title": "step-ca HTTP request rate by code",
+      "title": "ACME directory probe duration",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "gridPos": { "x": 0, "y": 16, "w": 12, "h": 8 },
       "targets": [
-        { "expr": "sum by (code)(rate(http_request_duration_seconds_count{job=\"pki-stepca\"}[5m]))", "refId": "A", "legendFormat": "{{code}}" }
+        { "expr": "probe_duration_seconds{instance=\"https://pki.lan:9000/acme/acme/directory\"}", "refId": "A", "legendFormat": "ACME probe" }
       ],
-      "fieldConfig": { "defaults": { "unit": "reqps" } }
+      "fieldConfig": { "defaults": { "unit": "s" } }
     },
     {
       "id": 22,
       "type": "timeseries",
-      "title": "step-ca process memory (RSS)",
+      "title": "step-ca own TLS cert remaining (hours)",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "gridPos": { "x": 12, "y": 16, "w": 12, "h": 8 },
       "targets": [
-        { "expr": "process_resident_memory_bytes{job=\"pki-stepca\"}", "refId": "A", "legendFormat": "rss" }
+        { "expr": "(probe_ssl_earliest_cert_expiry{instance=\"https://pki.lan:9000/acme/acme/directory\"} - time()) / 3600", "refId": "A", "legendFormat": "hours" }
       ],
-      "fieldConfig": { "defaults": { "unit": "bytes" } }
+      "fieldConfig": { "defaults": { "unit": "h", "decimals": 1 } }
     },
     {
       "id": 30,
