@@ -105,6 +105,24 @@ scrape_configs:
       - target_label: __address__
         replacement: blackbox-exporter:9115
 
+  # passwords.lan (cn-vaultwarden) host metrics via the dual-exporter pattern:
+  # cn-vaultwarden ships a SECOND node-exporter (node-exporter-lan) bound to
+  # the host netns so kaiser can reach it independently of the tailnet path.
+  # The tailnet-side node-exporter (inside ts-vault) keeps reporting to the
+  # VPS Prometheus separately. UFW on passwords.lan must allow 9100 from
+  # kaiser (10.1.1.140).
+  - job_name: passwords-node
+    scrape_interval: 30s
+    static_configs:
+      - targets: ["10.120.22.10:9100"]
+        labels:
+          host: passwords
+
+  # Vaultwarden /metrics — DEFERRED. Upstream vaultwarden (dani-garcia)
+  # doesn't yet expose a stable Prometheus endpoint; ENABLE_METRICS env
+  # var is not part of the documented config. We rely on the blackbox
+  # probe of https://passwords.lan for liveness instead.
+
   # pki.lan host metrics + service metrics. Reaches 10.0.0.192 via pfSense
   # routing (cross-subnet). cn-pki's node-exporter is on host network; its
   # Traefik publishes /metrics on :8082; step-ca publishes /metrics on :9110

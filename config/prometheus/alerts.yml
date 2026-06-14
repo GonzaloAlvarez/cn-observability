@@ -129,6 +129,46 @@ groups:
           summary: "pki.lan disk almost full"
           description: "/ on pki.lan is {{ $value | printf \"%.1f\" }}% full — step-ca will start failing soon."
 
+  # passwords.lan host alerts — mirror the kaiser-host thresholds, scoped to
+  # the passwords-node instance (10.120.22.10:9100, the LAN-side dual exporter).
+  - name: passwords-host
+    rules:
+      - alert: PasswordsHighCPU
+        expr: (1 - avg by (instance)(rate(node_cpu_seconds_total{instance="10.120.22.10:9100",mode="idle"}[5m]))) * 100 > 90
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "passwords.lan CPU usage is high"
+          description: "CPU on passwords.lan has been above 90% for 5m (current: {{ $value | printf \"%.1f\" }}%)."
+
+      - alert: PasswordsHighMemory
+        expr: (1 - node_memory_MemAvailable_bytes{instance="10.120.22.10:9100"} / node_memory_MemTotal_bytes{instance="10.120.22.10:9100"}) * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "passwords.lan memory usage is high"
+          description: "Memory on passwords.lan has been above 85% for 5m (current: {{ $value | printf \"%.1f\" }}%)."
+
+      - alert: PasswordsDiskSpaceLow
+        expr: (1 - node_filesystem_avail_bytes{instance="10.120.22.10:9100",mountpoint="/"} / node_filesystem_size_bytes{instance="10.120.22.10:9100",mountpoint="/"}) * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "passwords.lan disk space is running low"
+          description: "/ on passwords.lan is {{ $value | printf \"%.1f\" }}% full."
+
+      - alert: PasswordsDiskSpaceCritical
+        expr: (1 - node_filesystem_avail_bytes{instance="10.120.22.10:9100",mountpoint="/"} / node_filesystem_size_bytes{instance="10.120.22.10:9100",mountpoint="/"}) * 100 > 95
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "passwords.lan disk almost full"
+          description: "/ on passwords.lan is {{ $value | printf \"%.1f\" }}% full — Vaultwarden will start failing soon."
+
   # Synthetic probes — every LAN endpoint blackbox-exporter watches.
   #
   # Note on cert-expiry thresholds: step-ca issues 24h leaf certs and Traefik
