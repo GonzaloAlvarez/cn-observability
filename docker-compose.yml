@@ -59,6 +59,10 @@ services:
     image: grafana/loki:3.4.2
     ports:
       - "127.0.0.1:3100:3100"
+      # Second binding on kaiser's LAN IP so off-host promtails (cn-pki,
+      # cn-vaultwarden in Slice 4, etc.) can push without going through
+      # Traefik. UFW gates 3100/tcp to the pki+vault LAN supernets.
+      - "${KAISER_IP}:3100:3100"
     command: [ "-config.file=/etc/loki/loki.yml" ]
     volumes:
       - "./config/loki/loki.yml:/etc/loki/loki.yml:ro"
