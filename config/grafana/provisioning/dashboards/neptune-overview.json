@@ -1,7 +1,7 @@
 {
-  "uid": "kaiser-overview",
-  "title": "Kaiser host overview",
-  "tags": ["kaiser", "homelab", "node-exporter"],
+  "uid": "neptune-overview",
+  "title": "Neptune host overview",
+  "tags": ["neptune", "homelab", "node-exporter"],
   "timezone": "browser",
   "schemaVersion": 39,
   "version": 1,
@@ -25,7 +25,7 @@
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "gridPos": { "x": 0, "y": 1, "w": 8, "h": 5 },
       "targets": [
-        { "expr": "(1 - avg(rate(node_cpu_seconds_total{host=\"kaiser\",mode=\"idle\"}[5m]))) * 100", "refId": "A", "legendFormat": "cpu %", "instant": true }
+        { "expr": "(1 - avg(rate(node_cpu_seconds_total{host=\"neptune\",mode=\"idle\"}[5m]))) * 100", "refId": "A", "legendFormat": "cpu %", "instant": true }
       ],
       "fieldConfig": {
         "defaults": {
@@ -51,7 +51,7 @@
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "gridPos": { "x": 8, "y": 1, "w": 8, "h": 5 },
       "targets": [
-        { "expr": "(1 - node_memory_MemAvailable_bytes{host=\"kaiser\"} / node_memory_MemTotal_bytes{host=\"kaiser\"}) * 100", "refId": "A", "legendFormat": "mem %", "instant": true }
+        { "expr": "(1 - node_memory_MemAvailable_bytes{host=\"neptune\"} / node_memory_MemTotal_bytes{host=\"neptune\"}) * 100", "refId": "A", "legendFormat": "mem %", "instant": true }
       ],
       "fieldConfig": {
         "defaults": {
@@ -77,7 +77,7 @@
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "gridPos": { "x": 16, "y": 1, "w": 8, "h": 5 },
       "targets": [
-        { "expr": "(1 - node_filesystem_avail_bytes{host=\"kaiser\",mountpoint=\"/\"} / node_filesystem_size_bytes{host=\"kaiser\",mountpoint=\"/\"}) * 100", "refId": "A", "legendFormat": "disk %", "instant": true }
+        { "expr": "(1 - node_filesystem_avail_bytes{host=\"neptune\",mountpoint=\"/\"} / node_filesystem_size_bytes{host=\"neptune\",mountpoint=\"/\"}) * 100", "refId": "A", "legendFormat": "disk %", "instant": true }
       ],
       "fieldConfig": {
         "defaults": {
@@ -111,7 +111,7 @@
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "gridPos": { "x": 0, "y": 7, "w": 12, "h": 8 },
       "targets": [
-        { "expr": "avg by (mode) (rate(node_cpu_seconds_total{host=\"kaiser\"}[5m])) * 100", "refId": "A", "legendFormat": "{{mode}}" }
+        { "expr": "avg by (mode) (rate(node_cpu_seconds_total{host=\"neptune\"}[5m])) * 100", "refId": "A", "legendFormat": "{{mode}}" }
       ],
       "fieldConfig": { "defaults": { "unit": "percent", "custom": { "drawStyle": "line", "lineWidth": 1, "fillOpacity": 10, "stacking": { "mode": "normal" } } }, "overrides": [] },
       "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } }
@@ -123,9 +123,9 @@
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "gridPos": { "x": 12, "y": 7, "w": 12, "h": 8 },
       "targets": [
-        { "expr": "node_memory_MemTotal_bytes{host=\"kaiser\"}", "refId": "A", "legendFormat": "total" },
-        { "expr": "node_memory_MemAvailable_bytes{host=\"kaiser\"}", "refId": "B", "legendFormat": "available" },
-        { "expr": "node_memory_MemTotal_bytes{host=\"kaiser\"} - node_memory_MemAvailable_bytes{host=\"kaiser\"}", "refId": "C", "legendFormat": "used" }
+        { "expr": "node_memory_MemTotal_bytes{host=\"neptune\"}", "refId": "A", "legendFormat": "total" },
+        { "expr": "node_memory_MemAvailable_bytes{host=\"neptune\"}", "refId": "B", "legendFormat": "available" },
+        { "expr": "node_memory_MemTotal_bytes{host=\"neptune\"} - node_memory_MemAvailable_bytes{host=\"neptune\"}", "refId": "C", "legendFormat": "used" }
       ],
       "fieldConfig": { "defaults": { "unit": "bytes", "custom": { "drawStyle": "line", "lineWidth": 1, "fillOpacity": 5 } }, "overrides": [] },
       "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } }
@@ -137,8 +137,8 @@
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "gridPos": { "x": 0, "y": 15, "w": 12, "h": 8 },
       "targets": [
-        { "expr": "rate(node_network_receive_bytes_total{host=\"kaiser\",device!~\"lo|docker.*|br-.*|veth.*\"}[5m]) * 8", "refId": "A", "legendFormat": "rx {{device}}" },
-        { "expr": "rate(node_network_transmit_bytes_total{host=\"kaiser\",device!~\"lo|docker.*|br-.*|veth.*\"}[5m]) * 8", "refId": "B", "legendFormat": "tx {{device}}" }
+        { "expr": "rate(node_network_receive_bytes_total{host=\"neptune\",device!~\"lo|docker.*|br-.*|veth.*\"}[5m]) * 8", "refId": "A", "legendFormat": "rx {{device}}" },
+        { "expr": "rate(node_network_transmit_bytes_total{host=\"neptune\",device!~\"lo|docker.*|br-.*|veth.*\"}[5m]) * 8", "refId": "B", "legendFormat": "tx {{device}}" }
       ],
       "fieldConfig": { "defaults": { "unit": "bps", "custom": { "drawStyle": "line", "lineWidth": 1, "fillOpacity": 10 } }, "overrides": [] },
       "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } }
@@ -150,8 +150,8 @@
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "gridPos": { "x": 12, "y": 15, "w": 12, "h": 8 },
       "targets": [
-        { "expr": "rate(node_disk_read_bytes_total{host=\"kaiser\"}[5m])", "refId": "A", "legendFormat": "read {{device}}" },
-        { "expr": "rate(node_disk_written_bytes_total{host=\"kaiser\"}[5m])", "refId": "B", "legendFormat": "write {{device}}" }
+        { "expr": "rate(node_disk_read_bytes_total{host=\"neptune\"}[5m])", "refId": "A", "legendFormat": "read {{device}}" },
+        { "expr": "rate(node_disk_written_bytes_total{host=\"neptune\"}[5m])", "refId": "B", "legendFormat": "write {{device}}" }
       ],
       "fieldConfig": { "defaults": { "unit": "Bps", "custom": { "drawStyle": "line", "lineWidth": 1, "fillOpacity": 10 } }, "overrides": [] },
       "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } }
@@ -171,7 +171,7 @@
       "datasource": { "type": "loki", "uid": "loki" },
       "gridPos": { "x": 0, "y": 24, "w": 24, "h": 10 },
       "targets": [
-        { "expr": "{host=\"kaiser\"} |~ \"(?i)error|warning|fatal|critical\"", "refId": "A" }
+        { "expr": "{host=\"neptune\"} |~ \"(?i)error|warning|fatal|critical\"", "refId": "A" }
       ],
       "options": {
         "showTime": true,

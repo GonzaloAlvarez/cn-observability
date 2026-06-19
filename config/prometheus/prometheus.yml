@@ -38,6 +38,13 @@ scrape_configs:
         labels:
           host: kaiser
 
+  # neptune.lan host metrics — cn-authentik runs here (see homelab/CLAUDE.md §3).
+  - job_name: neptune-node
+    static_configs:
+      - targets: ["10.1.1.92:9100"]
+        labels:
+          host: neptune
+
   # Blackbox HTTPS probes — every LAN endpoint that should be reachable from
   # kaiser's network position. probe_ssl_earliest_cert_expiry on these targets
   # is what feeds CertExpired in alerts.yml.
