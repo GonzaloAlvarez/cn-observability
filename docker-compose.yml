@@ -180,14 +180,44 @@ services:
     restart: unless-stopped
 
   # ── container mgmt ───────────────────────────────────────────────────────
+  # Builds /etc/ssl/certs/ca-bundle.crt as `system CA bundle + cn-pki root`
+  # into the shared `portainer_ca_bundle` volume. Portainer below sets
+  # SSL_CERT_FILE to it so Go's TLS stack trusts BOTH LE/Mozilla roots
+  # (needed for portainer.io version checks etc.) AND step-ca leaves
+  # (needed for the OIDC backchannel to auth.neptune.lan).
+  portainer-init:
+    image: portainer/portainer-ce:latest
+    entrypoint: [ "/bin/sh", "-c" ]
+    command:
+      - |
+        cat /etc/ssl/certs/ca-certificates.crt /step-ca/root_ca.crt > /shared/ca-bundle.crt \
+          && chmod 644 /shared/ca-bundle.crt \
+          && echo "ca-bundle.crt: $$(wc -l < /shared/ca-bundle.crt) lines"
+    volumes:
+      - ./certs/root_ca.crt:/step-ca/root_ca.crt:ro
+      - portainer_ca_bundle:/shared
+    restart: "no"
+
   portainer:
     image: portainer/portainer-ce:latest
+    depends_on:
+      portainer-init:
+        condition: service_completed_successfully
+    environment:
+      # Go's crypto/tls honors SSL_CERT_FILE (single file) before falling back
+      # to the system trust store. Pointing at the merged bundle here keeps
+      # ALL the usual Mozilla roots PLUS step-ca trustable.
+      - SSL_CERT_FILE=/portainer-tls/ca-bundle.crt
     ports:
       - "127.0.0.1:9000:9000"
     command: [ "-H", "unix:///var/run/docker.sock" ]
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - portainer_data:/data
+      # Mount the bundle volume at a dedicated path so we don't overlay the
+      # container's own /etc/ssl/certs directory (which would lose every
+      # other cert installed in the image).
+      - portainer_ca_bundle:/portainer-tls:ro
     restart: unless-stopped
 
 volumes:
@@ -196,3 +226,4 @@ volumes:
   loki_data:
   grafana_data:
   portainer_data:
+  portainer_ca_bundle:
