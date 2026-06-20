@@ -180,17 +180,21 @@ services:
     restart: unless-stopped
 
   # ── container mgmt ───────────────────────────────────────────────────────
-  # Builds /etc/ssl/certs/ca-bundle.crt as `system CA bundle + cn-pki root`
+  # Builds /shared/ca-bundle.crt as `Alpine system CA bundle + cn-pki root`
   # into the shared `portainer_ca_bundle` volume. Portainer below sets
   # SSL_CERT_FILE to it so Go's TLS stack trusts BOTH LE/Mozilla roots
   # (needed for portainer.io version checks etc.) AND step-ca leaves
   # (needed for the OIDC backchannel to auth.neptune.lan).
+  #
+  # NB: Portainer's own image is built FROM SCRATCH — no shell, no ca-certs
+  # — so we can't reuse it for the init container. Alpine pinned for repro.
   portainer-init:
-    image: portainer/portainer-ce:latest
+    image: alpine:3.20
     entrypoint: [ "/bin/sh", "-c" ]
     command:
       - |
-        cat /etc/ssl/certs/ca-certificates.crt /step-ca/root_ca.crt > /shared/ca-bundle.crt \
+        apk add --no-cache ca-certificates >/dev/null \
+          && cat /etc/ssl/certs/ca-certificates.crt /step-ca/root_ca.crt > /shared/ca-bundle.crt \
           && chmod 644 /shared/ca-bundle.crt \
           && echo "ca-bundle.crt: $$(wc -l < /shared/ca-bundle.crt) lines"
     volumes:
