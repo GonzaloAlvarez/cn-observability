@@ -20,10 +20,20 @@ modules:
 
   # Plain HTTP. Used for the step-ca CA bootstrap URL and k3s LAN ingresses
   # (which expose plain HTTP — TLS is tailnet-side via traefik-lab).
+  #
+  # follow_redirects=false because a 302 is itself a valid "service is up"
+  # signal (it's in valid_status_codes), and apps fronted by oauth2-proxy
+  # (e.g. filemanager.k8s.lan) redirect unauthenticated requests to
+  # https://auth.neptune.lan — a step-ca-fronted HTTPS endpoint that this
+  # module's http transport has no tls_config to verify, so following the
+  # redirect always fails with "x509: certificate signed by unknown
+  # authority". Stopping at the first response is both correct (we're
+  # probing the LAN ingress, not the OIDC chain) and unblocking.
   lan_http:
     prober: http
     timeout: 8s
     http:
       preferred_ip_protocol: "ip4"
       method: GET
+      follow_redirects: false
       valid_status_codes: [200, 201, 204, 301, 302, 304, 401, 403, 404]
