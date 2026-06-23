@@ -171,13 +171,17 @@ groups:
 
   # Synthetic probes — every LAN endpoint blackbox-exporter watches.
   #
-  # Note on cert-expiry thresholds: step-ca issues 24h leaf certs and Traefik
-  # renews them daily, so cert_remaining oscillates between ~0h and ~24h on
-  # healthy targets. A static "<7d / <14d" warning would fire continuously
-  # — instead, CertRenewalStalled detects the renewal pipeline going quiet
-  # (probe_ssl_earliest_cert_expiry hasn't changed value in 25h), which is
-  # the actual broken-state signal. CertExpired remains as the post-expiry
-  # backstop and BlackboxProbeFailed catches the cascading effect.
+  # Note on cert-expiry thresholds: step-ca issues 7-day (168h) leaf certs
+  # and Traefik renews on its own schedule, so cert_remaining oscillates
+  # somewhere between ~0h and ~168h on healthy targets. A static "<7d / <14d"
+  # warning would fire constantly — instead, CertRenewalStalled detects the
+  # renewal pipeline going quiet (probe_ssl_earliest_cert_expiry hasn't
+  # changed value in 6 days = ~24h before any 7d leaf would expire). That
+  # gives a 24h actionable warning window. CertExpired remains as the
+  # post-expiry backstop and BlackboxProbeFailed catches the cascading
+  # effect. Was 25h when leaves were 24h — bumped to 6d on 2026-06-23 when
+  # step-ca's ACME provisioner duration was raised to 168h, prompted by the
+  # one-failed-renewal-cycle-is-fatal lesson learned that day.
   - name: synthetic
     rules:
       - alert: BlackboxProbeFailed
@@ -200,17 +204,17 @@ groups:
 
       # Early-warning for the failure mode that took down every *.kaiser.lan
       # service on 2026-06-22: traefik-lan's ACME renewal silently failed
-      # ~21h before the 24h leaf expired, and nothing fired until CertExpired
-      # caught it 2h post-expiry. step-ca leaves should turn over inside any
-      # 25h window — `changes() == 0` over 25h means traefik has stopped
-      # issuing new leaves for that target. Pair with `probe_success > 0`
-      # so a probe outage (which sets cert_expiry to 0, also "no changes")
-      # doesn't double-fire on top of BlackboxProbeFailed.
+      # and nothing fired until CertExpired caught it post-expiry. step-ca
+      # leaves should turn over inside any 6d window (we issue 7d leaves;
+      # traefik renews well before then). `changes() == 0` over 6d means
+      # traefik has stopped issuing new leaves for that target. Pair with
+      # `probe_success > 0` so a probe outage (which sets cert_expiry to 0,
+      # also "no changes") doesn't double-fire on top of BlackboxProbeFailed.
       - alert: CertRenewalStalled
-        expr: changes(probe_ssl_earliest_cert_expiry{job=~"blackbox-https"}[25h]) == 0 and probe_ssl_earliest_cert_expiry > 0 and probe_success == 1
+        expr: changes(probe_ssl_earliest_cert_expiry{job=~"blackbox-https"}[6d]) == 0 and probe_ssl_earliest_cert_expiry > 0 and probe_success == 1
         for: 30m
         labels:
           severity: warning
         annotations:
           summary: "TLS cert renewal stalled: {{ $labels.instance }}"
-          description: "{{ $labels.instance }}'s leaf cert has not been re-issued in 25h. step-ca renewal pipeline is likely broken; the leaf will expire and start tripping CertExpired / BlackboxProbeFailed within hours."
+          description: "{{ $labels.instance }}'s leaf cert has not been re-issued in 6 days. step-ca renewal pipeline is likely broken; the 7d leaf will expire and start tripping CertExpired / BlackboxProbeFailed within ~24h."
