@@ -59,6 +59,12 @@ scrape_configs:
           - https://passwords.lan
           - https://homeiot.lan
           - https://pki.lan
+          # cn-mzfxa + cn-mzsync on neptune.lan
+          - https://accounts.fxa.neptune.lan
+          - https://api.fxa.neptune.lan
+          - https://oauth.fxa.neptune.lan
+          - https://profile.fxa.neptune.lan
+          - https://sync.neptune.lan
           # step-ca's own ACME directory — separate cert (CN=Step Online CA),
           # exercises the same chain a Traefik client uses to renew.
           - https://pki.lan:9000/acme/acme/directory
