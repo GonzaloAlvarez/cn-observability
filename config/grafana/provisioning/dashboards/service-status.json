@@ -170,7 +170,7 @@
       "title": "Hours until TLS cert expires",
       "description": "step-ca issues 24h leaves renewed daily by traefik, so this should oscillate between ~0h and ~24h. Anything stuck >25h means renewal is broken. The CertExpired alert in alerts.yml triggers if any value falls below 0.",
       "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "gridPos": { "x": 0, "y": 33, "w": 24, "h": 6 },
+      "gridPos": { "x": 0, "y": 33, "w": 24, "h": 12 },
       "targets": [
         { "expr": "(probe_ssl_earliest_cert_expiry{job=\"blackbox-https\"} - time()) / 3600", "refId": "A", "legendFormat": "{{instance}}", "instant": true }
       ],
@@ -202,7 +202,7 @@
       "id": 8,
       "type": "row",
       "title": "Logs",
-      "gridPos": { "x": 0, "y": 39, "w": 24, "h": 1 },
+      "gridPos": { "x": 0, "y": 45, "w": 24, "h": 1 },
       "collapsed": false,
       "panels": []
     },
@@ -211,7 +211,7 @@
       "type": "logs",
       "title": "blackbox-exporter recent log lines",
       "datasource": { "type": "loki", "uid": "loki" },
-      "gridPos": { "x": 0, "y": 40, "w": 24, "h": 10 },
+      "gridPos": { "x": 0, "y": 46, "w": 24, "h": 10 },
       "targets": [
         { "expr": "{container=\"cn-observability-blackbox-exporter-1\"}", "refId": "A" }
       ],
