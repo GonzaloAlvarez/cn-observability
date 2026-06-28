@@ -85,6 +85,10 @@ scrape_configs:
           - https://jellyfin.kaiser.lan
           - https://roms.kaiser.lan
           - https://fitness.kaiser.lan
+          # cn-books — Calibre-Web / Shelfmark / Audiobookshelf (Books dashboard)
+          - https://calibre.kaiser.lan
+          - https://shelfmark.kaiser.lan
+          - https://audiobookshelf.kaiser.lan
     relabel_configs:
       - source_labels: [__address__]
         target_label: __param_target

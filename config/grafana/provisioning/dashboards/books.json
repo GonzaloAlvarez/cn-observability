@@ -1,0 +1,202 @@
+{
+  "uid": "books",
+  "title": "Books",
+  "tags": ["homelab", "books", "status"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "30s",
+  "time": { "from": "now-24h", "to": "now" },
+  "templating": { "list": [] },
+  "annotations": { "list": [] },
+  "panels": [
+    {
+      "id": 10,
+      "type": "row",
+      "title": "At a glance — cn-books (Calibre-Web / Shelfmark / Audiobookshelf)",
+      "gridPos": { "x": 0, "y": 0, "w": 24, "h": 1 },
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "id": 11,
+      "type": "stat",
+      "title": "Probe success (current)",
+      "description": "Blackbox HTTPS probe of each cn-books LAN ingress. Green = up now (probe_success == 1), red = down. Logs/app-metrics for these services live on the VPS Grafana (it receives the cn-books promtail/Loki stream); the kaiser Grafana tracks their reachability + TLS.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 0, "y": 1, "w": 24, "h": 5 },
+      "targets": [
+        { "expr": "probe_success{job=\"blackbox-https\", instance=~\"https://(calibre|shelfmark|audiobookshelf).kaiser.lan\"}", "refId": "A", "legendFormat": "{{instance}}", "instant": true }
+      ],
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "textMode": "value_and_name"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            { "type": "value", "options": {
+              "0": { "text": "DOWN", "color": "red", "index": 0 },
+              "1": { "text": "UP",   "color": "green", "index": 1 }
+            } }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "green", "value": 1 }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 1,
+      "type": "row",
+      "title": "Up / down — live state per book service",
+      "gridPos": { "x": 0, "y": 6, "w": 24, "h": 1 },
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "id": 2,
+      "type": "state-timeline",
+      "title": "Probe success (last 24h)",
+      "description": "One row per book service. Green = probe_success == 1, red = 0. The succession of bars IS the status page.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 0, "y": 7, "w": 24, "h": 8 },
+      "targets": [
+        { "expr": "probe_success{job=\"blackbox-https\", instance=~\"https://(calibre|shelfmark|audiobookshelf).kaiser.lan\"}", "refId": "A", "legendFormat": "{{instance}}" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": { "lineWidth": 0, "fillOpacity": 80 },
+          "mappings": [
+            { "type": "value", "options": { "0": { "text": "DOWN", "color": "red" } } },
+            { "type": "value", "options": { "1": { "text": "UP", "color": "green" } } }
+          ],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "red", "value": null }, { "color": "green", "value": 1 }] }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showValue": "never",
+        "alignValue": "left",
+        "mergeValues": true,
+        "rowHeight": 0.85,
+        "legend": { "displayMode": "list", "placement": "right", "showLegend": true }
+      }
+    },
+    {
+      "id": 3,
+      "type": "row",
+      "title": "Latency + 7-day uptime %",
+      "gridPos": { "x": 0, "y": 15, "w": 24, "h": 1 },
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "Probe latency (last 24h)",
+      "description": "Wall-clock time to complete each HTTPS probe (GET + TLS handshake + TCP). Spikes correlate with backend overload (e.g. Shelfmark mid-download / Byparr solve).",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 0, "y": 16, "w": 16, "h": 10 },
+      "targets": [
+        { "expr": "probe_duration_seconds{job=\"blackbox-https\", instance=~\"https://(calibre|shelfmark|audiobookshelf).kaiser.lan\"}", "refId": "A", "legendFormat": "{{instance}}" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": { "drawStyle": "line", "lineWidth": 1, "fillOpacity": 5, "showPoints": "never" }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true, "calcs": ["last", "max"] },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      }
+    },
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "Uptime % (last 7 days)",
+      "description": "100 * avg_over_time(probe_success[7d]) per book service. >99 = green.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 16, "y": 16, "w": 8, "h": 10 },
+      "targets": [
+        { "expr": "100 * avg_over_time(probe_success{job=\"blackbox-https\", instance=~\"https://(calibre|shelfmark|audiobookshelf).kaiser.lan\"}[7d])", "refId": "A", "legendFormat": "{{instance}}", "instant": true }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0, "max": 100,
+          "decimals": 2,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "yellow", "value": 95 },
+              { "color": "green", "value": 99 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "textMode": "value_and_name",
+        "orientation": "horizontal"
+      }
+    },
+    {
+      "id": 6,
+      "type": "row",
+      "title": "TLS expiry (step-ca leaves, renewed daily)",
+      "gridPos": { "x": 0, "y": 26, "w": 24, "h": 1 },
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "id": 7,
+      "type": "stat",
+      "title": "Hours until TLS cert expires",
+      "description": "step-ca issues 24h leaves renewed daily by traefik, so this oscillates between ~0h and ~24h. Stuck >25h means renewal is broken; <0 triggers the CertExpired alert.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 0, "y": 27, "w": 24, "h": 8 },
+      "targets": [
+        { "expr": "(probe_ssl_earliest_cert_expiry{job=\"blackbox-https\", instance=~\"https://(calibre|shelfmark|audiobookshelf).kaiser.lan\"} - time()) / 3600", "refId": "A", "legendFormat": "{{instance}}", "instant": true }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "h",
+          "decimals": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "yellow", "value": 2 },
+              { "color": "green", "value": 6 },
+              { "color": "yellow", "value": 26 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "textMode": "value_and_name",
+        "orientation": "horizontal"
+      }
+    }
+  ]
+}
