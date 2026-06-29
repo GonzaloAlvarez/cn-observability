@@ -45,6 +45,17 @@ scrape_configs:
         labels:
           host: neptune
 
+  # neptune.lan host metrics via cn-outline's own node-exporter (:9103). Same
+  # host as neptune-node, but stack-labelled so per-stack dashboards/queries
+  # resolve uniformly. UFW on neptune must allow 9103/tcp from kaiser (10.1.1.140).
+  - job_name: neptune-outline
+    scrape_interval: 30s
+    static_configs:
+      - targets: ["10.1.1.92:9103"]
+        labels:
+          host: neptune
+          stack: cn-outline
+
   # Blackbox HTTPS probes — every LAN endpoint that should be reachable from
   # kaiser's network position. probe_ssl_earliest_cert_expiry on these targets
   # is what feeds CertExpired in alerts.yml.
@@ -65,6 +76,8 @@ scrape_configs:
           - https://oauth.fxa.neptune.lan
           - https://profile.fxa.neptune.lan
           - https://sync.neptune.lan
+          # cn-outline on neptune.lan (step-ca leaf; LAN reaches neptune directly)
+          - https://outline.neptune.lan
           # step-ca's own ACME directory — separate cert (CN=Step Online CA),
           # exercises the same chain a Traefik client uses to renew.
           - https://pki.lan:9000/acme/acme/directory
