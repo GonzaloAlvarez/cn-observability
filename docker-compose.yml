@@ -196,8 +196,23 @@ services:
     entrypoint: [ "/bin/sh", "-c" ]
     command:
       - |
-        apk add --no-cache ca-certificates >/dev/null \
-          && cat /etc/ssl/certs/ca-certificates.crt /step-ca/root_ca.crt > /shared/ca-bundle.crt \
+        # `apk add` needs external internet. On a cold/WoL boot this container
+        # can start before kaiser's WAN/DNS path is ready, so retry until the
+        # fetch succeeds (network-not-ready is transient) instead of failing
+        # hard — a hard failure leaves portainer stuck in `Created` (its
+        # depends_on is service_completed_successfully) and the reconcile cron
+        # can't heal a Created container.
+        n=0
+        until apk add --no-cache ca-certificates >/dev/null 2>&1; do
+          n=$$((n + 1))
+          if [ "$$n" -ge 60 ]; then
+            echo "portainer-init: apk add ca-certificates failed after $$n tries — giving up"
+            exit 1
+          fi
+          echo "portainer-init: waiting for network to fetch ca-certificates (try $$n)"
+          sleep 5
+        done
+        cat /etc/ssl/certs/ca-certificates.crt /step-ca/root_ca.crt > /shared/ca-bundle.crt \
           && chmod 644 /shared/ca-bundle.crt \
           && echo "ca-bundle.crt: $$(wc -l < /shared/ca-bundle.crt) lines"
     volumes:
