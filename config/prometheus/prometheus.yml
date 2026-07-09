@@ -56,6 +56,25 @@ scrape_configs:
           host: neptune
           stack: cn-outline
 
+  # Immich app metrics (OpenTelemetry, IMMICH_TELEMETRY_INCLUDE=all): api :8081
+  # + microservices :8082. UFW on neptune allows both from kaiser (10.1.1.140).
+  - job_name: neptune-immich
+    scrape_interval: 30s
+    static_configs:
+      - targets: ["10.1.1.92:8081", "10.1.1.92:8082"]
+        labels:
+          host: neptune
+          stack: cn-immich
+
+  # neptune.lan host metrics via cn-immich's node-exporter (:9104), stack-labelled.
+  - job_name: neptune-immich-node
+    scrape_interval: 30s
+    static_configs:
+      - targets: ["10.1.1.92:9104"]
+        labels:
+          host: neptune
+          stack: cn-immich
+
   # Blackbox HTTPS probes — every LAN endpoint that should be reachable from
   # kaiser's network position. probe_ssl_earliest_cert_expiry on these targets
   # is what feeds CertExpired in alerts.yml.
@@ -78,6 +97,8 @@ scrape_configs:
           - https://sync.neptune.lan
           # cn-outline on neptune.lan (step-ca leaf; LAN reaches neptune directly)
           - https://outline.neptune.lan
+          # cn-immich on neptune.lan (step-ca leaf; LAN reaches neptune directly)
+          - https://photos.neptune.lan
           # step-ca's own ACME directory — separate cert (CN=Step Online CA),
           # exercises the same chain a Traefik client uses to renew.
           - https://pki.lan:9000/acme/acme/directory

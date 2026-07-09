@@ -1,0 +1,129 @@
+{
+  "uid": "immich",
+  "title": "Immich",
+  "tags": ["homelab", "immich", "neptune"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "1m",
+  "time": { "from": "now-24h", "to": "now" },
+  "templating": { "list": [] },
+  "annotations": { "list": [] },
+  "links": [
+    {
+      "asDropdown": false, "icon": "external link", "includeVars": false, "keepTime": true,
+      "tags": ["homelab"], "targetBlank": false, "title": "Dashboards", "tooltip": "", "type": "dashboards", "url": ""
+    }
+  ],
+  "panels": [
+    {
+      "id": 1, "type": "row", "title": "Overview — cn-immich on neptune",
+      "gridPos": { "x": 0, "y": 0, "w": 24, "h": 1 }, "collapsed": false, "panels": []
+    },
+    {
+      "id": 2, "type": "stat", "title": "Service reachable (photos.neptune.lan)",
+      "description": "blackbox HTTPS probe_success for the LAN ingress.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 0, "y": 1, "w": 6, "h": 5 },
+      "targets": [ { "expr": "probe_success{job=\"blackbox-https\", instance=\"https://photos.neptune.lan\"}", "refId": "A", "legendFormat": "up" } ],
+      "fieldConfig": { "defaults": { "mappings": [ { "type": "value", "options": { "0": { "text": "DOWN", "color": "red" }, "1": { "text": "UP", "color": "green" } } } ], "thresholds": { "mode": "absolute", "steps": [ { "color": "red", "value": null }, { "color": "green", "value": 1 } ] } }, "overrides": [] },
+      "options": { "colorMode": "background", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "value" }
+    },
+    {
+      "id": 3, "type": "stat", "title": "Immich metrics targets up",
+      "description": "up for the neptune-immich scrape (api :8081 + microservices :8082).",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 6, "y": 1, "w": 6, "h": 5 },
+      "targets": [
+        { "expr": "sum(up{job=\"neptune-immich\"})", "refId": "A", "legendFormat": "up" },
+        { "expr": "count(up{job=\"neptune-immich\"})", "refId": "B", "legendFormat": "total" }
+      ],
+      "fieldConfig": { "defaults": { "thresholds": { "mode": "absolute", "steps": [ { "color": "red", "value": null }, { "color": "green", "value": 2 } ] } }, "overrides": [] },
+      "options": { "colorMode": "value", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "value_and_name" }
+    },
+    {
+      "id": 4, "type": "stat", "title": "TLS cert — days left",
+      "description": "step-ca leaf on photos.neptune.lan (auto-renewed by traefik-lan).",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 12, "y": 1, "w": 6, "h": 5 },
+      "targets": [ { "expr": "(probe_ssl_earliest_cert_expiry{instance=\"https://photos.neptune.lan\"} - time()) / 86400", "refId": "A", "legendFormat": "days" } ],
+      "fieldConfig": { "defaults": { "unit": "d", "decimals": 1, "thresholds": { "mode": "absolute", "steps": [ { "color": "red", "value": null }, { "color": "yellow", "value": 1 }, { "color": "green", "value": 3 } ] } }, "overrides": [] },
+      "options": { "colorMode": "value", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "value" }
+    },
+    {
+      "id": 5, "type": "stat", "title": "Immich server memory (RSS)",
+      "description": "process_memory_usage of the immich-server (api :8081).",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 18, "y": 1, "w": 6, "h": 5 },
+      "targets": [ { "expr": "process_memory_usage{job=\"neptune-immich\", instance=\"10.1.1.92:8081\"}", "refId": "A", "legendFormat": "rss" } ],
+      "fieldConfig": { "defaults": { "unit": "bytes", "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null } ] } }, "overrides": [] },
+      "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "value" }
+    },
+    {
+      "id": 10, "type": "row", "title": "Immich process", "gridPos": { "x": 0, "y": 6, "w": 24, "h": 1 }, "collapsed": false, "panels": []
+    },
+    {
+      "id": 11, "type": "timeseries", "title": "Process CPU utilization",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 0, "y": 7, "w": 12, "h": 8 },
+      "targets": [ { "expr": "process_cpu_utilization{job=\"neptune-immich\"}", "refId": "A", "legendFormat": "{{instance}}" } ],
+      "fieldConfig": { "defaults": { "unit": "percentunit", "custom": { "drawStyle": "line", "fillOpacity": 10 } }, "overrides": [] },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } }
+    },
+    {
+      "id": 12, "type": "timeseries", "title": "Process memory usage",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 12, "y": 7, "w": 12, "h": 8 },
+      "targets": [ { "expr": "process_memory_usage{job=\"neptune-immich\"}", "refId": "A", "legendFormat": "{{instance}}" } ],
+      "fieldConfig": { "defaults": { "unit": "bytes", "custom": { "drawStyle": "line", "fillOpacity": 10 } }, "overrides": [] },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } }
+    },
+    {
+      "id": 20, "type": "row", "title": "Activity (instrumented calls)", "gridPos": { "x": 0, "y": 15, "w": 24, "h": 1 }, "collapsed": false, "panels": []
+    },
+    {
+      "id": 21, "type": "timeseries", "title": "Instrumented call rate (ops/s)",
+      "description": "Rate across all immich_*_duration_count histograms — a proxy for overall server activity (DB/repo calls).",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 0, "y": 16, "w": 12, "h": 8 },
+      "targets": [ { "expr": "sum by (instance) (rate({__name__=~\"immich_.+_duration_count\", job=\"neptune-immich\"}[5m]))", "refId": "A", "legendFormat": "{{instance}}" } ],
+      "fieldConfig": { "defaults": { "unit": "ops", "custom": { "drawStyle": "line", "fillOpacity": 10 } }, "overrides": [] },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } }
+    },
+    {
+      "id": 22, "type": "timeseries", "title": "Avg instrumented op latency (ms)",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 12, "y": 16, "w": 12, "h": 8 },
+      "targets": [ { "expr": "sum(rate({__name__=~\"immich_.+_duration_sum\", job=\"neptune-immich\"}[5m])) / sum(rate({__name__=~\"immich_.+_duration_count\", job=\"neptune-immich\"}[5m]))", "refId": "A", "legendFormat": "avg ms" } ],
+      "fieldConfig": { "defaults": { "unit": "ms", "custom": { "drawStyle": "line", "fillOpacity": 10 } }, "overrides": [] },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "single" } }
+    },
+    {
+      "id": 30, "type": "row", "title": "Host (neptune)", "gridPos": { "x": 0, "y": 24, "w": 24, "h": 1 }, "collapsed": false, "panels": []
+    },
+    {
+      "id": 31, "type": "timeseries", "title": "Host load (1m)",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 0, "y": 25, "w": 8, "h": 7 },
+      "targets": [ { "expr": "node_load1{stack=\"cn-immich\"}", "refId": "A", "legendFormat": "load1" } ],
+      "fieldConfig": { "defaults": { "unit": "short", "custom": { "drawStyle": "line", "fillOpacity": 10 } }, "overrides": [] },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "single" } }
+    },
+    {
+      "id": 32, "type": "timeseries", "title": "Host memory available",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 8, "y": 25, "w": 8, "h": 7 },
+      "targets": [ { "expr": "node_memory_MemAvailable_bytes{stack=\"cn-immich\"}", "refId": "A", "legendFormat": "available" } ],
+      "fieldConfig": { "defaults": { "unit": "bytes", "custom": { "drawStyle": "line", "fillOpacity": 10 } }, "overrides": [] },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "single" } }
+    },
+    {
+      "id": 33, "type": "timeseries", "title": "Filesystem available",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 16, "y": 25, "w": 8, "h": 7 },
+      "targets": [ { "expr": "node_filesystem_avail_bytes{stack=\"cn-immich\", fstype!~\"tmpfs|overlay|nfs.*\"}", "refId": "A", "legendFormat": "{{mountpoint}}" } ],
+      "fieldConfig": { "defaults": { "unit": "bytes", "custom": { "drawStyle": "line", "fillOpacity": 10 } }, "overrides": [] },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } }
+    }
+  ]
+}
