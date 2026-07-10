@@ -38,43 +38,50 @@ groups:
           summary: "Loki has not ingested any log lines in 15 minutes"
           description: "kaiser Loki distributor has received zero lines for 15m — promtail may be wedged or Loki's write path is broken."
 
-  - name: kaiser-host
+  # Host-level alerts. This Prometheus scrapes several hosts (kaiser, neptune,
+  # passwords, pki, …), so these rules are host-generic: the expr aggregates per
+  # `host` label (dedup — a host with multiple node-exporters, e.g. neptune's
+  # per-stack :9103/:9104, would otherwise fire one alert per exporter) and the
+  # annotations name the actual host via {{ $labels.host }}. (`site=kaiser` on
+  # every alert is just this Prometheus's origin, from global.external_labels —
+  # not the subject host.)
+  - name: host
     rules:
-      - alert: KaiserHighCPU
-        expr: (1 - avg by (instance)(rate(node_cpu_seconds_total{mode="idle"}[5m]))) * 100 > 90
+      - alert: HighCPU
+        expr: (1 - avg by (host)(rate(node_cpu_seconds_total{mode="idle"}[5m]))) * 100 > 90
         for: 5m
         labels:
           severity: warning
         annotations:
-          summary: "kaiser CPU usage is high"
-          description: "CPU usage on kaiser has been above 90% for more than 5 minutes (current: {{ $value | printf \"%.1f\" }}%)."
+          summary: "{{ $labels.host }} CPU usage is high"
+          description: "CPU usage on {{ $labels.host }} has been above 90% for more than 5 minutes (current: {{ $value | printf \"%.1f\" }}%)."
 
-      - alert: KaiserHighMemory
-        expr: (1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * 100 > 85
+      - alert: HighMemory
+        expr: max by (host)((1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * 100) > 85
         for: 5m
         labels:
           severity: warning
         annotations:
-          summary: "kaiser memory usage is high"
-          description: "Memory usage has been above 85% for more than 5 minutes (current: {{ $value | printf \"%.1f\" }}%)."
+          summary: "{{ $labels.host }} memory usage is high"
+          description: "Memory usage on {{ $labels.host }} has been above 85% for more than 5 minutes (current: {{ $value | printf \"%.1f\" }}%)."
 
-      - alert: KaiserDiskSpaceLow
-        expr: (1 - node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) * 100 > 80
+      - alert: DiskSpaceLow
+        expr: max by (host, mountpoint)((1 - node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) * 100) > 80
         for: 5m
         labels:
           severity: warning
         annotations:
-          summary: "kaiser disk space is running low"
-          description: "Disk usage on / has been above 80% for more than 5 minutes (current: {{ $value | printf \"%.1f\" }}%)."
+          summary: "{{ $labels.host }} disk space is running low"
+          description: "Disk usage on {{ $labels.mountpoint }} ({{ $labels.host }}) has been above 80% for more than 5 minutes (current: {{ $value | printf \"%.1f\" }}%)."
 
-      - alert: KaiserDiskSpaceCritical
-        expr: (1 - node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) * 100 > 95
+      - alert: DiskSpaceCritical
+        expr: max by (host, mountpoint)((1 - node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) * 100) > 95
         for: 1m
         labels:
           severity: critical
         annotations:
-          summary: "kaiser disk almost full"
-          description: "/ on kaiser is {{ $value | printf \"%.1f\" }}% full — services may fail."
+          summary: "{{ $labels.host }} disk almost full"
+          description: "{{ $labels.mountpoint }} on {{ $labels.host }} is {{ $value | printf \"%.1f\" }}% full — services may fail."
 
       # SMART data via smartctl-exporter. kaiser has 1× WDC HDD (sda) + 1×
       # Samsung NVMe (nvme0n1); both are sampled. smartctl_device_smart_status
