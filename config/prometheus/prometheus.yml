@@ -119,6 +119,7 @@ scrape_configs:
           - https://jellyfin.kaiser.lan
           - https://roms.kaiser.lan
           - https://fitness.kaiser.lan
+          - https://chat.kaiser.lan
           # cn-books — Calibre-Web / Shelfmark / Audiobookshelf (Books dashboard)
           - https://calibre.kaiser.lan
           - https://shelfmark.kaiser.lan
