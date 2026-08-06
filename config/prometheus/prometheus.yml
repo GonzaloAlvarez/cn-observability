@@ -120,6 +120,8 @@ scrape_configs:
           - https://roms.kaiser.lan
           - https://fitness.kaiser.lan
           - https://chat.kaiser.lan
+          # cn-exercises — static exercises-dataset site (nginx)
+          - https://exercises.kaiser.lan
           # cn-books — Calibre-Web / Shelfmark / Audiobookshelf (Books dashboard)
           - https://calibre.kaiser.lan
           - https://shelfmark.kaiser.lan
