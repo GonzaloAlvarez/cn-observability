@@ -39,9 +39,8 @@ modules:
       valid_status_codes: [200, 201, 204, 301, 302, 304, 401, 403, 404]
 
   # LAN DNS resolver probe (cn-dnsdhcpd Technitium on pki, 10.0.0.192:53).
-  # Queries router.lan through the resolver's `lan` Forwarder zone, so a
-  # green probe proves the WHOLE phase-1 chain: kaiser -> Technitium ->
-  # pfSense Unbound (hidden lease registry). Feeds LanDnsDown in alerts.yml.
+  # Queries router.lan, answered authoritatively from the Primary `lan`
+  # zone (pinned in cn-dnsdhcpd dns/records.tsv). Feeds LanDnsDown.
   dns_lan:
     prober: dns
     timeout: 5s
