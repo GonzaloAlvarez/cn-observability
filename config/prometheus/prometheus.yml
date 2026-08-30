@@ -182,6 +182,23 @@ scrape_configs:
       - target_label: __address__
         replacement: blackbox-exporter:9115
 
+  # Technitium app metrics (cn-dnsdhcpd) via the stack's json_exporter on
+  # pki:7979 — Technitium 15.x has no native Prometheus endpoint, only
+  # /api/dashboard/metrics/json. The API token lives on pki as the exporter's
+  # Bearer credentials_file; nothing secret in this (public) config.
+  - job_name: dnsdhcpd-technitium
+    metrics_path: /probe
+    params:
+      module: [technitium]
+      target: ["http://127.0.0.1:5380/api/dashboard/metrics/json"]
+    scrape_interval: 30s
+    static_configs:
+      - targets:
+          - 10.0.0.250:7979
+        labels:
+          host: pki
+          stack: cn-dnsdhcpd
+
   # passwords.lan (cn-vaultwarden) host metrics via the dual-exporter pattern:
   # cn-vaultwarden ships a SECOND node-exporter (node-exporter-lan) bound to
   # the host netns so kaiser can reach it independently of the tailnet path.

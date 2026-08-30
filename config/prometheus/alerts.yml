@@ -204,6 +204,37 @@ groups:
           summary: "LAN DNS resolver down: {{ $labels.instance }}"
           description: "Technitium on pki (cn-dnsdhcpd) has failed the router.lan resolution probe for 3 minutes. LAN clients pointed at 10.0.0.250 have no DNS. Rollback: pfSense DHCP option 6 back to blank (per-VLAN), or fix the stack: ssh pki.lan 'cd ~/cn-dnsdhcpd && docker compose ps'."
 
+      # LAN resolver answering but slow — early smoke before users notice.
+      - alert: LanDnsHighLatency
+        expr: probe_duration_seconds{job="blackbox-dns"} > 0.5
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "LAN DNS slow: {{ $labels.instance }}"
+          description: "router.lan lookups through Technitium have taken >500ms for 10 minutes. Check pki load and 'docker stats' for the technitium container."
+
+      # App-metrics pipeline dead (json_exporter or Technitium API). DNS may
+      # still be serving — LanDnsDown covers actual resolution.
+      - alert: TechnitiumMetricsDown
+        expr: up{job="dnsdhcpd-technitium"} == 0
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Technitium metrics scrape down"
+          description: "kaiser Prometheus cannot scrape the cn-dnsdhcpd json_exporter on 10.0.0.250:7979 for 10 minutes. Check 'docker compose ps metrics-exporter' on pki and the API token file."
+
+      # Resolution errors climbing — upstream trouble or a broken zone.
+      - alert: LanDnsServfailSpike
+        expr: rate(technitium_servfail_total[10m]) > 1
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "LAN DNS SERVFAIL spike on pki"
+          description: "Technitium is returning >1 SERVFAIL/s over 10 minutes. Check upstream reachability (recursion) and the Query Logs app at https://dns.pki.lan."
+
       - alert: BlackboxProbeFailed
         expr: probe_success == 0
         for: 5m
