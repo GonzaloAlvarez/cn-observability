@@ -38,7 +38,7 @@ modules:
       follow_redirects: false
       valid_status_codes: [200, 201, 204, 301, 302, 304, 401, 403, 404]
 
-  # LAN DNS resolver probe (cn-dnsdhcpd Technitium on pki, 10.0.0.192:53).
+  # LAN DNS resolver probe (cn-dnsdhcpd Technitium on pki, 10.0.0.250:53).
   # Queries router.lan, answered authoritatively from the Primary `lan`
   # zone (pinned in cn-dnsdhcpd dns/records.tsv). Feeds LanDnsDown.
   dns_lan:

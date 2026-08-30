@@ -25,7 +25,7 @@
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "gridPos": { "x": 0, "y": 1, "w": 6, "h": 5 },
       "targets": [
-        { "expr": "(1 - avg(rate(node_cpu_seconds_total{instance=\"10.0.0.192:9100\",mode=\"idle\"}[5m]))) * 100", "refId": "A", "instant": true }
+        { "expr": "(1 - avg(rate(node_cpu_seconds_total{instance=\"10.0.0.250:9100\",mode=\"idle\"}[5m]))) * 100", "refId": "A", "instant": true }
       ],
       "fieldConfig": {
         "defaults": {
@@ -43,7 +43,7 @@
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "gridPos": { "x": 6, "y": 1, "w": 6, "h": 5 },
       "targets": [
-        { "expr": "(1 - node_memory_MemAvailable_bytes{instance=\"10.0.0.192:9100\"} / node_memory_MemTotal_bytes{instance=\"10.0.0.192:9100\"}) * 100", "refId": "A", "instant": true }
+        { "expr": "(1 - node_memory_MemAvailable_bytes{instance=\"10.0.0.250:9100\"} / node_memory_MemTotal_bytes{instance=\"10.0.0.250:9100\"}) * 100", "refId": "A", "instant": true }
       ],
       "fieldConfig": {
         "defaults": {
@@ -61,7 +61,7 @@
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "gridPos": { "x": 12, "y": 1, "w": 6, "h": 5 },
       "targets": [
-        { "expr": "(1 - node_filesystem_avail_bytes{instance=\"10.0.0.192:9100\",mountpoint=\"/\"} / node_filesystem_size_bytes{instance=\"10.0.0.192:9100\",mountpoint=\"/\"}) * 100", "refId": "A", "instant": true }
+        { "expr": "(1 - node_filesystem_avail_bytes{instance=\"10.0.0.250:9100\",mountpoint=\"/\"} / node_filesystem_size_bytes{instance=\"10.0.0.250:9100\",mountpoint=\"/\"}) * 100", "refId": "A", "instant": true }
       ],
       "fieldConfig": {
         "defaults": {
@@ -105,7 +105,7 @@
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "gridPos": { "x": 0, "y": 7, "w": 12, "h": 8 },
       "targets": [
-        { "expr": "(1 - avg(rate(node_cpu_seconds_total{instance=\"10.0.0.192:9100\",mode=\"idle\"}[5m])) by (instance)) * 100", "refId": "A", "legendFormat": "cpu %" }
+        { "expr": "(1 - avg(rate(node_cpu_seconds_total{instance=\"10.0.0.250:9100\",mode=\"idle\"}[5m])) by (instance)) * 100", "refId": "A", "legendFormat": "cpu %" }
       ],
       "fieldConfig": { "defaults": { "unit": "percent", "min": 0, "max": 100 } }
     },
@@ -116,7 +116,7 @@
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "gridPos": { "x": 12, "y": 7, "w": 12, "h": 8 },
       "targets": [
-        { "expr": "(1 - node_memory_MemAvailable_bytes{instance=\"10.0.0.192:9100\"} / node_memory_MemTotal_bytes{instance=\"10.0.0.192:9100\"}) * 100", "refId": "A", "legendFormat": "mem %" }
+        { "expr": "(1 - node_memory_MemAvailable_bytes{instance=\"10.0.0.250:9100\"} / node_memory_MemTotal_bytes{instance=\"10.0.0.250:9100\"}) * 100", "refId": "A", "legendFormat": "mem %" }
       ],
       "fieldConfig": { "defaults": { "unit": "percent", "min": 0, "max": 100 } }
     },

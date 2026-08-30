@@ -160,7 +160,7 @@ scrape_configs:
         replacement: blackbox-exporter:9115
 
   # LAN DNS (cn-dnsdhcpd Technitium on pki) — dns-prober probe of
-  # 10.0.0.192:53 resolving router.lan, i.e. the full phase-1 chain
+  # 10.0.0.250:53 resolving router.lan, i.e. the full phase-1 chain
   # (Technitium `lan` forwarder -> pfSense). Page-worthy once clients cut
   # over: this is the resolver every LAN device will depend on.
   - job_name: blackbox-dns
@@ -170,7 +170,7 @@ scrape_configs:
     scrape_interval: 30s
     static_configs:
       - targets:
-          - 10.0.0.192:53
+          - 10.0.0.250:53
         labels:
           host: pki
           stack: cn-dnsdhcpd
@@ -200,7 +200,7 @@ scrape_configs:
   # var is not part of the documented config. We rely on the blackbox
   # probe of https://passwords.lan for liveness instead.
 
-  # pki.lan host metrics + service metrics. Reaches 10.0.0.192 via pfSense
+  # pki.lan host metrics + service metrics. Reaches 10.0.0.250 via pfSense
   # routing (cross-subnet). cn-pki's node-exporter is on host network; its
   # Traefik publishes /metrics on :8082; step-ca publishes /metrics on :9110
   # (the latter requires `metrics: {address: ":9110"}` in ca.json — see the
@@ -208,14 +208,14 @@ scrape_configs:
   - job_name: pki-node
     scrape_interval: 30s
     static_configs:
-      - targets: ["10.0.0.192:9100"]
+      - targets: ["10.0.0.250:9100"]
         labels:
           host: pki
 
   - job_name: pki-traefik
     scrape_interval: 30s
     static_configs:
-      - targets: ["10.0.0.192:8082"]
+      - targets: ["10.0.0.250:8082"]
         labels:
           host: pki
           stack: cn-pki

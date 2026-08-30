@@ -96,12 +96,12 @@ groups:
           description: "{{ $labels.device }} ({{ $labels.model_name }}) is reporting SMART status FAILED — replace before it dies."
 
   # pki.lan host alerts — mirror the kaiser-host thresholds, scoped to the
-  # pki-node instance (10.0.0.192:9100). Catches CPU/memory/disk-space issues
+  # pki-node instance (10.0.0.250:9100). Catches CPU/memory/disk-space issues
   # on the Pi 5 running cn-pki before step-ca starts misbehaving.
   - name: pki-host
     rules:
       - alert: PkiHighCPU
-        expr: (1 - avg by (instance)(rate(node_cpu_seconds_total{instance="10.0.0.192:9100",mode="idle"}[5m]))) * 100 > 90
+        expr: (1 - avg by (instance)(rate(node_cpu_seconds_total{instance="10.0.0.250:9100",mode="idle"}[5m]))) * 100 > 90
         for: 5m
         labels:
           severity: warning
@@ -110,7 +110,7 @@ groups:
           description: "CPU on pki.lan has been above 90% for 5m (current: {{ $value | printf \"%.1f\" }}%)."
 
       - alert: PkiHighMemory
-        expr: (1 - node_memory_MemAvailable_bytes{instance="10.0.0.192:9100"} / node_memory_MemTotal_bytes{instance="10.0.0.192:9100"}) * 100 > 85
+        expr: (1 - node_memory_MemAvailable_bytes{instance="10.0.0.250:9100"} / node_memory_MemTotal_bytes{instance="10.0.0.250:9100"}) * 100 > 85
         for: 5m
         labels:
           severity: warning
@@ -119,7 +119,7 @@ groups:
           description: "Memory on pki.lan has been above 85% for 5m (current: {{ $value | printf \"%.1f\" }}%)."
 
       - alert: PkiDiskSpaceLow
-        expr: (1 - node_filesystem_avail_bytes{instance="10.0.0.192:9100",mountpoint="/"} / node_filesystem_size_bytes{instance="10.0.0.192:9100",mountpoint="/"}) * 100 > 80
+        expr: (1 - node_filesystem_avail_bytes{instance="10.0.0.250:9100",mountpoint="/"} / node_filesystem_size_bytes{instance="10.0.0.250:9100",mountpoint="/"}) * 100 > 80
         for: 5m
         labels:
           severity: warning
@@ -128,7 +128,7 @@ groups:
           description: "/ on pki.lan is {{ $value | printf \"%.1f\" }}% full."
 
       - alert: PkiDiskSpaceCritical
-        expr: (1 - node_filesystem_avail_bytes{instance="10.0.0.192:9100",mountpoint="/"} / node_filesystem_size_bytes{instance="10.0.0.192:9100",mountpoint="/"}) * 100 > 95
+        expr: (1 - node_filesystem_avail_bytes{instance="10.0.0.250:9100",mountpoint="/"} / node_filesystem_size_bytes{instance="10.0.0.250:9100",mountpoint="/"}) * 100 > 95
         for: 1m
         labels:
           severity: critical
@@ -202,7 +202,7 @@ groups:
           severity: critical
         annotations:
           summary: "LAN DNS resolver down: {{ $labels.instance }}"
-          description: "Technitium on pki (cn-dnsdhcpd) has failed the router.lan resolution probe for 3 minutes. LAN clients pointed at 10.0.0.192 have no DNS. Rollback: pfSense DHCP option 6 back to blank (per-VLAN), or fix the stack: ssh pki.lan 'cd ~/cn-dnsdhcpd && docker compose ps'."
+          description: "Technitium on pki (cn-dnsdhcpd) has failed the router.lan resolution probe for 3 minutes. LAN clients pointed at 10.0.0.250 have no DNS. Rollback: pfSense DHCP option 6 back to blank (per-VLAN), or fix the stack: ssh pki.lan 'cd ~/cn-dnsdhcpd && docker compose ps'."
 
       - alert: BlackboxProbeFailed
         expr: probe_success == 0
