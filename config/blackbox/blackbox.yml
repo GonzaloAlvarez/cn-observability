@@ -37,3 +37,20 @@ modules:
       method: GET
       follow_redirects: false
       valid_status_codes: [200, 201, 204, 301, 302, 304, 401, 403, 404]
+
+  # LAN DNS resolver probe (cn-dnsdhcpd Technitium on pki, 10.0.0.192:53).
+  # Queries router.lan through the resolver's `lan` Forwarder zone, so a
+  # green probe proves the WHOLE phase-1 chain: kaiser -> Technitium ->
+  # pfSense Unbound (hidden lease registry). Feeds LanDnsDown in alerts.yml.
+  dns_lan:
+    prober: dns
+    timeout: 5s
+    dns:
+      transport_protocol: udp
+      preferred_ip_protocol: "ip4"
+      query_name: router.lan
+      query_type: A
+      valid_rcodes: [NOERROR]
+      validate_answer_rrs:
+        fail_if_none_matches_regexp:
+          - "10\\.0\\.0\\.1"

@@ -191,6 +191,19 @@ groups:
   # one-failed-renewal-cycle-is-fatal lesson learned that day.
   - name: synthetic
     rules:
+      # LAN resolver down (cn-dnsdhcpd Technitium on pki). Faster and more
+      # specific than the generic BlackboxProbeFailed (which also fires at
+      # 5m) because once DHCP option 6 points clients here, this outage
+      # takes the whole LAN's name resolution with it.
+      - alert: LanDnsDown
+        expr: probe_success{job="blackbox-dns"} == 0
+        for: 3m
+        labels:
+          severity: critical
+        annotations:
+          summary: "LAN DNS resolver down: {{ $labels.instance }}"
+          description: "Technitium on pki (cn-dnsdhcpd) has failed the router.lan resolution probe for 3 minutes. LAN clients pointed at 10.0.0.192 have no DNS. Rollback: pfSense DHCP option 6 back to blank (per-VLAN), or fix the stack: ssh pki.lan 'cd ~/cn-dnsdhcpd && docker compose ps'."
+
       - alert: BlackboxProbeFailed
         expr: probe_success == 0
         for: 5m

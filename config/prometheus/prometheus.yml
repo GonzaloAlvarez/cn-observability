@@ -159,6 +159,29 @@ scrape_configs:
       - target_label: __address__
         replacement: blackbox-exporter:9115
 
+  # LAN DNS (cn-dnsdhcpd Technitium on pki) — dns-prober probe of
+  # 10.0.0.192:53 resolving router.lan, i.e. the full phase-1 chain
+  # (Technitium `lan` forwarder -> pfSense). Page-worthy once clients cut
+  # over: this is the resolver every LAN device will depend on.
+  - job_name: blackbox-dns
+    metrics_path: /probe
+    params:
+      module: [dns_lan]
+    scrape_interval: 30s
+    static_configs:
+      - targets:
+          - 10.0.0.192:53
+        labels:
+          host: pki
+          stack: cn-dnsdhcpd
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
+
   # passwords.lan (cn-vaultwarden) host metrics via the dual-exporter pattern:
   # cn-vaultwarden ships a SECOND node-exporter (node-exporter-lan) bound to
   # the host netns so kaiser can reach it independently of the tailnet path.
