@@ -89,6 +89,10 @@ scrape_configs:
           - https://passwords.lan
           - https://homeiot.lan
           - https://pki.lan
+          # cn-nvr on cerberus.lan — Frigate's /api/version is routed without
+          # the Authentik gate (the root 302s); Grafana's /api/health is public.
+          - https://nvr.cerberus.lan/api/version
+          - https://grafana.cerberus.lan/api/health
           # cn-mzfxa + cn-mzsync on neptune.lan
           - https://accounts.fxa.neptune.lan
           - https://api.fxa.neptune.lan
