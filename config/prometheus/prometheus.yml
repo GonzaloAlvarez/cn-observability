@@ -155,6 +155,13 @@ scrape_configs:
           - http://freshrss.k8s.lan
           - http://netbox.k8s.lan
           - http://hello.k8s.lan
+          # cn-printer on printer.lan (WiFi VLAN, Pi 4): CUPS web UI/IPP, the
+          # scanservjs API and the swis UI, all Docker-published by the stack's
+          # tailscale sidecar. Plain HTTP by design (printing is a native-client
+          # protocol; no Traefik/step-ca on that host).
+          - http://printer.lan:631/
+          - http://printer.lan:8080/api/v1/system
+          - http://printer.lan:5520/
     relabel_configs:
       - source_labels: [__address__]
         target_label: __param_target
@@ -249,6 +256,27 @@ scrape_configs:
   # the right config shape), step-ca health is observed via the blackbox
   # ACME-directory probe `https://pki.lan:9000/acme/acme/directory` already
   # configured in blackbox-https.
+
+  # printer.lan (cn-printer + amun-printer) — Pi 4 on the WiFi VLAN
+  # (10.2.0.30, pfSense static mapping). Dual-exporter pattern like
+  # passwords: node-exporter-lan (:9100, textfile dir carries resilience_*
+  # and the Pi's rpi.prom under-voltage/throttle/temperature metrics) and the
+  # stack's own cups-exporter (:9329: queue state, jobs, state reasons,
+  # toner). Both host-network; ufw on printer admits 10.1.1.140 only.
+  - job_name: printer-node
+    scrape_interval: 30s
+    static_configs:
+      - targets: ["10.2.0.30:9100"]
+        labels:
+          host: printer
+
+  - job_name: printer-cups
+    scrape_interval: 30s
+    static_configs:
+      - targets: ["10.2.0.30:9329"]
+        labels:
+          host: printer
+          stack: cn-printer
 
   # SMART data for kaiser's disks via smartctl-exporter sidecar.
   - job_name: kaiser-smart

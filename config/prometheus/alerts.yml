@@ -176,6 +176,115 @@ groups:
           summary: "passwords.lan disk almost full"
           description: "/ on passwords.lan is {{ $value | printf \"%.1f\" }}% full — Vaultwarden will start failing soon."
 
+  # printer.lan (cn-printer / amun-printer). Two concerns: the Pi's power
+  # (the 2026 reboot investigation found 16 under-voltage events across the
+  # recorded boots, two abrupt deaths right after CPU bursts and one 3.5-week
+  # outage — a marginal 5 V supply with a bus-powered SSD) and the print
+  # queue (a stopped printer or a stuck job used to go unnoticed for weeks).
+  # rpi_* metrics come from amun-printer's rpi-throttled.sh textfile; cups_*
+  # and printer_* from cn-printer's cups-exporter. The generic `host` group
+  # covers CPU/memory/disk via host="printer".
+  - name: printer
+    rules:
+      - alert: PiUndervoltage
+        expr: rpi_undervoltage_now{host="printer"} == 1
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "printer.lan under-voltage right now"
+          description: "The Pi's SoC reports the 5 V rail below 4.63 V (vcgencmd get_throttled bit 0). This is the brownout pattern that reset plane.lan. Check the PSU (official 5.1 V/3 A), the USB-C cable, and move the SSD to a powered hub."
+
+      - alert: PiUndervoltageSinceBoot
+        expr: rpi_undervoltage_occurred{host="printer"} == 1
+        for: 10m
+        labels:
+          severity: info
+        annotations:
+          summary: "printer.lan saw under-voltage since boot"
+          description: "get_throttled bit 16 is set: at least one under-voltage dip since the last boot. Not actionable alone; if it recurs after the PSU/hub fix the supply is still marginal."
+
+      - alert: PiThrottled
+        expr: rpi_throttled_now{host="printer"} == 1 or rpi_soft_temp_limit_now{host="printer"} == 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "printer.lan is throttled"
+          description: "The SoC is throttling (power or temperature; bits 2/3 of get_throttled). Current temperature: rpi_soc_temp_celsius on the Printer host overview."
+
+      - alert: PiThrottleMetricsStale
+        expr: time() - rpi_throttled_last_update_seconds{host="printer"} > 600
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "printer.lan throttle metrics are stale"
+          description: "rpi.prom has not been rewritten for 10 minutes — the /etc/cron.d/rpi-throttled job or node-exporter-lan's textfile collector is broken (amun printer re-installs both)."
+
+      - alert: CupsExporterDown
+        expr: up{job="printer-cups"} == 0
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "cups-exporter on printer.lan unreachable"
+          description: "kaiser Prometheus cannot scrape 10.2.0.30:9329 for 10 minutes. Check 'docker compose ps cups-exporter' in ~/cn-printer and the ufw hole from 10.1.1.140."
+
+      - alert: CupsDown
+        expr: cups_up{host="printer"} == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "cupsd on printer.lan is not answering"
+          description: "The cups-exporter is up but cupsd on :631 does not answer. Nothing prints. Check 'docker compose logs cups' in ~/cn-printer."
+
+      - alert: PrinterQueueMissing
+        expr: cups_up{host="printer"} == 1 and absent(cups_printer_state{host="printer",printer="Brother_MFC-L2750DW"})
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "printer.lan has no Brother queue"
+          description: "cupsd is up but the Brother_MFC-L2750DW queue does not exist for 15 minutes — the printer did not answer IPP at start (off? USB unplugged? ipp-usb down?). The cups container retries every 60 s; check 'docker compose logs cups' and 'systemctl status ipp-usb' on the host."
+
+      - alert: PrinterStopped
+        expr: cups_printer_state{host="printer"} == 5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Queue {{ $labels.printer }} is stopped"
+          description: "CUPS marked the queue stopped (printer-state 5) for 5 minutes — usually a backend error after the printer went away. 'docker compose exec cups cupsenable {{ $labels.printer }}' once the printer is back."
+
+      - alert: PrinterNeedsAttention
+        expr: cups_printer_state_reason{host="printer",reason=~"(media-empty|media-jam|toner-empty|marker-supply-empty|cover-open|door-open|input-tray-missing|offline).*"} == 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Printer needs attention: {{ $labels.reason }}"
+          description: "{{ $labels.printer }} reports {{ $labels.reason }} for 5 minutes (paper, jam, toner, cover or offline)."
+
+      - alert: PrinterTonerLow
+        expr: min by (printer, marker) (printer_marker_level_percent{host="printer"}) < 10
+        for: 1h
+        labels:
+          severity: info
+        annotations:
+          summary: "Toner/drum low on {{ $labels.printer }}: {{ $labels.marker }}"
+          description: "{{ $labels.marker }} is at {{ $value | printf \"%.0f\" }}%. Order a TN-760/DR-730 before it stops printing."
+
+      - alert: PrintQueueStuck
+        expr: cups_jobs{host="printer",state="pending"} > 0 and cups_job_oldest_pending_age_seconds{host="printer"} > 900
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Print jobs stuck on {{ $labels.printer }}"
+          description: "A job has been pending for more than 15 minutes on {{ $labels.printer }}. This used to mean 'PDF fails on the printer'; with the raster-only queue it means the printer is off, out of paper or ipp-usb lost the device. 'docker compose exec cups lpstat -o' and 'journalctl -u ipp-usb' on the host."
+
   # Synthetic probes — every LAN endpoint blackbox-exporter watches.
   #
   # Note on cert-expiry thresholds: step-ca issues 7-day (168h) leaf certs
