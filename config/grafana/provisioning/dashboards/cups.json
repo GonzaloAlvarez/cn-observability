@@ -648,7 +648,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "probe_success{instance=\"http://printer.lan:5520/\"}",
+          "expr": "probe_success{instance=\"http://printer.lan:5520/app/\"}",
           "refId": "A"
         }
       ],
