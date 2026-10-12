@@ -93,6 +93,8 @@ scrape_configs:
           # the Authentik gate (the root 302s); Grafana's /api/health is public.
           - https://nvr.cerberus.lan/api/version
           - https://grafana.cerberus.lan/api/health
+          # cn-printer on printer.lan — scanservjs behind the Pi's host traefik-lan (step-ca leaf)
+          - https://scan.print.lan/api/v1/system
           # cn-mzfxa + cn-mzsync on neptune.lan
           - https://accounts.fxa.neptune.lan
           - https://api.fxa.neptune.lan
@@ -155,12 +157,11 @@ scrape_configs:
           - http://freshrss.k8s.lan
           - http://netbox.k8s.lan
           - http://hello.k8s.lan
-          # cn-printer on printer.lan (WiFi VLAN, Pi 4): CUPS web UI/IPP, the
-          # scanservjs API and the swis UI, all Docker-published by the stack's
-          # tailscale sidecar. Plain HTTP by design (printing is a native-client
-          # protocol; no Traefik/step-ca on that host).
+          # cn-printer on printer.lan (WiFi VLAN, Pi 4): CUPS web UI/IPP and the
+          # swis UI, Docker-published by the stack's tailscale sidecar — plain
+          # HTTP by design (printing is a native-client protocol). The scan UI
+          # is probed as https://scan.print.lan in blackbox-https.
           - http://printer.lan:631/
-          - http://printer.lan:8080/api/v1/system
           - http://printer.lan:5520/app/
     relabel_configs:
       - source_labels: [__address__]

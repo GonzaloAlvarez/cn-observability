@@ -566,7 +566,7 @@
     {
       "id": 10,
       "type": "stat",
-      "title": "scanservjs :8080",
+      "title": "Scan UI scan.print.lan",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -577,7 +577,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "probe_success{instance=\"http://printer.lan:8080/api/v1/system\"}",
+          "expr": "probe_success{instance=\"https://scan.print.lan/api/v1/system\"}",
           "refId": "A"
         }
       ],
