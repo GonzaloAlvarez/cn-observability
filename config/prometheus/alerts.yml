@@ -276,6 +276,15 @@ groups:
           summary: "Toner/drum low on {{ $labels.printer }}: {{ $labels.marker }}"
           description: "{{ $labels.marker }} is at {{ $value | printf \"%.0f\" }}%. Order a TN-760/DR-730 before it stops printing."
 
+      - alert: PrinterDrumLow
+        expr: brother_drum_life_percent{host="printer"} < 10
+        for: 1h
+        labels:
+          severity: info
+        annotations:
+          summary: "Drum unit low on the Brother ({{ $value | printf \"%.0f\" }}% left)"
+          description: "cups-exporter reads the drum life from the printer's maintenance page. Order a DR-730; the printer keeps working until it hits 0."
+
       - alert: PrintQueueStuck
         expr: cups_jobs{host="printer",state="pending"} > 0 and cups_job_oldest_pending_age_seconds{host="printer"} > 900
         for: 5m
