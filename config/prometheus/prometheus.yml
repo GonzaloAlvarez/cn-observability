@@ -157,12 +157,11 @@ scrape_configs:
           - http://freshrss.k8s.lan
           - http://netbox.k8s.lan
           - http://hello.k8s.lan
-          # cn-printer on printer.lan (WiFi VLAN, Pi 4): CUPS web UI/IPP and the
-          # swis UI, Docker-published by the stack's tailscale sidecar — plain
-          # HTTP by design (printing is a native-client protocol). The scan UI
-          # is probed as https://scan.print.lan in blackbox-https.
+          # cn-printer on printer.lan (WiFi VLAN, Pi 4): CUPS web UI/IPP,
+          # Docker-published by the stack's tailscale sidecar — plain HTTP by
+          # design (printing is a native-client protocol). The scan UI is
+          # probed as https://scan.print.lan in blackbox-https.
           - http://printer.lan:631/
-          - http://printer.lan:5520/app/
     relabel_configs:
       - source_labels: [__address__]
         target_label: __param_target
