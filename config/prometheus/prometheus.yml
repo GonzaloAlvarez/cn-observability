@@ -95,6 +95,10 @@ scrape_configs:
           - https://grafana.cerberus.lan/api/health
           # cn-printer on printer.lan — scanservjs behind the Pi's host traefik-lan (step-ca leaf)
           - https://scan.print.lan/api/v1/system
+          # cn-llmrouter — LiteLLM gateway on kaiser, LAN side of the split-horizon
+          # name (step-ca leaf via cn-home traefik-lan → ts-llmrouter :4000);
+          # liveliness is unauthenticated (the router has no key by design).
+          - https://llmrouter.lab.gn.al/health/liveliness
           # cn-mzfxa + cn-mzsync on neptune.lan
           - https://accounts.fxa.neptune.lan
           - https://api.fxa.neptune.lan
