@@ -58,6 +58,8 @@ Stripped because they're tailnet-specific or duplicated by other repos:
 
 UI-edit → export JSON → drop in `config/grafana/provisioning/dashboards/<name>.json` → commit + push → `ssh kaiser 'cd ~/dev/cn-observability && docker compose -p cn-observability restart grafana'`. The `dashboards.yml` provider auto-discovers any `*.json` on a 30-second loop.
 
+Two dashboards are generated elsewhere and copied in: `cerberus-overview.json` and `frigate.json` come from `cn-nvr/grafana/build-dashboards.py` (`dist/cerberus-overview.json`, `dist/frigate-lan.json`). Their data arrives through cn-nvr's kaiser-only metrics entrypoint (`10.0.0.230:9100`, jobs `cerberus-node` + `frigate` in `prometheus.yml`); `CerberusLanScrapeDown` in `alerts.yml` watches that path, while the VPS plane owns the cn-nvr alerts themselves.
+
 ## License
 
 GNU GPL v3 © 2026 Gonzalo Alvarez

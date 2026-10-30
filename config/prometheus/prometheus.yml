@@ -90,9 +90,8 @@ scrape_configs:
           - https://homeiot.lan
           - https://pki.lan
           # cn-nvr on cerberus.lan — Frigate's /api/version is routed without
-          # the Authentik gate (the root 302s); Grafana's /api/health is public.
+          # the Authentik gate (the root 302s).
           - https://nvr.cerberus.lan/api/version
-          - https://grafana.cerberus.lan/api/health
           # cn-printer on printer.lan — scanservjs behind the Pi's host traefik-lan (step-ca leaf)
           - https://scan.print.lan/api/v1/system
           # cn-llmrouter — LiteLLM gateway on kaiser, LAN side of the split-horizon
@@ -281,6 +280,36 @@ scrape_configs:
         labels:
           host: printer
           stack: cn-printer
+
+  # cerberus.lan (cn-nvr, Frigate NVR). cerberus has no LAN-side exporter of
+  # its own: node-exporter and Frigate live in the ts-nvr netns and report to
+  # the VPS plane over the tailnet, which owns cn-nvr alerting and logs. For
+  # the host + Frigate dashboards on this Grafana (cerberus-overview, frigate;
+  # generated in cn-nvr/grafana/build-dashboards.py), cn-nvr's host-network
+  # traefik-lan exposes a kaiser-only plain-HTTP entrypoint on 10.0.0.230:9100
+  # (ClientIP 10.1.1.140 + UFW on cerberus) routing /metrics → node-exporter
+  # and /api/metrics → Frigate's internal port. The job is named `frigate`
+  # (not cerberus-frigate) because the shared dashboard hardcodes
+  # up{job="frigate"}. alerts.yml excludes stack="cn-nvr" from the generic
+  # target-down rule and watches this scrape path with CerberusLanScrapeDown.
+  - job_name: cerberus-node
+    scrape_interval: 30s
+    static_configs:
+      - targets: ["10.0.0.230:9100"]
+        labels:
+          host: cerberus
+          stack: cn-nvr
+          app: node-exporter
+
+  - job_name: frigate
+    scrape_interval: 30s
+    metrics_path: /api/metrics
+    static_configs:
+      - targets: ["10.0.0.230:9100"]
+        labels:
+          host: cerberus
+          stack: cn-nvr
+          app: frigate
 
   # SMART data for kaiser's disks via smartctl-exporter sidecar.
   - job_name: kaiser-smart
