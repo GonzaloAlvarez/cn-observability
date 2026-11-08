@@ -131,6 +131,8 @@ scrape_configs:
           - https://chat.kaiser.lan
           # cn-paperless — docs.kaiser.lan 301s to the canonical docs.lab.gn.al (valid code)
           - https://docs.kaiser.lan
+          # cn-opencloud — drive.kaiser.lan 301s to the canonical drive.lab.gn.al (valid code)
+          - https://drive.kaiser.lan
           # cn-exercises — static exercises-dataset site (nginx)
           - https://exercises.kaiser.lan
           # cn-books — Calibre-Web / Shelfmark / Audiobookshelf (Books dashboard)
