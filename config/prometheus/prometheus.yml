@@ -129,6 +129,8 @@ scrape_configs:
           - https://roms.kaiser.lan
           - https://fitness.kaiser.lan
           - https://chat.kaiser.lan
+          # cn-paperless — docs.kaiser.lan 301s to the canonical docs.lab.gn.al (valid code)
+          - https://docs.kaiser.lan
           # cn-exercises — static exercises-dataset site (nginx)
           - https://exercises.kaiser.lan
           # cn-books — Calibre-Web / Shelfmark / Audiobookshelf (Books dashboard)
