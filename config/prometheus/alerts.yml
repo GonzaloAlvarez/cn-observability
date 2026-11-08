@@ -310,6 +310,26 @@ groups:
           summary: "Print jobs stuck on {{ $labels.printer }}"
           description: "A job has been pending for more than 15 minutes on {{ $labels.printer }}. This used to mean 'PDF fails on the printer'; with the raster-only queue it means the printer is off, out of paper or ipp-usb lost the device. 'docker compose exec cups lpstat -o' and 'journalctl -u ipp-usb' on the host."
 
+      # scan_forwarder_* come from cn-printer's paperless-forwarder (textfile via
+      # node-exporter-lan): scans that left scanservjs for Paperless-ngx on kaiser.
+      - alert: ScanInboxStuck
+        expr: scan_forwarder_pending_files{host="printer"} > 0
+        for: 30m
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $value }} scan(s) waiting in /srv/scans/inbox for 30 minutes"
+          description: "The paperless-forwarder on printer.lan has not been able to hand the scans to Paperless (docs.lab.gn.al on kaiser) — reachable={{ with query \"scan_forwarder_paperless_reachable{host=\\\"printer\\\"}\" }}{{ . | first | value }}{{ end }}. Check cn-paperless on kaiser (`docker compose -p cn-paperless ps`), then `docker compose logs --tail=50 paperless-forwarder` in /home/gonzalo/cn-printer on printer. Nothing is lost: files stay in inbox/ until Paperless confirms them."
+
+      - alert: ScanForwardFailed
+        expr: increase(scan_forwarder_failed_total{host="printer"}[1h]) > 0
+        for: 0m
+        labels:
+          severity: info
+        annotations:
+          summary: "Paperless rejected a scan"
+          description: "A scan ended in /srv/scans/failed/ on printer.lan with a <name>.paperless-FAILED.txt marker carrying Paperless's reason (duplicate, unreadable file, …). Look at the marker, fix or re-queue the file by moving it back into inbox/."
+
   # Synthetic probes — every LAN endpoint blackbox-exporter watches.
   #
   # Note on cert-expiry thresholds: step-ca issues 7-day (168h) leaf certs
