@@ -16,17 +16,27 @@ Routing + TLS is handled by [cn-home](https://github.com/GonzaloAlvarez/cn-home)
 
 ## Deploy
 
-```sh
-./setup.sh                                 # interactive .env + fetch root CA + render templates
-docker compose -p cn-observability up -d   # or let cn-home/deploy --with-observability handle it
-```
-
-Or, from the workstation, deploy both with one command:
+kaiser's `.env` is Kauket-installed — secret `kaiser.cn_observability_env`, destination `/home/gonzalo/dev/cn-observability/.env` (0600). Nothing is hand-edited on the host and nothing is copied from a workstation checkout. From the workstation:
 
 ```sh
 cd ../cn-home
-./deploy --with-observability
+./deploy --with-observability   # rsync tracked files; on kaiser: kauket get + ./setup.sh (render) + compose up
 ```
+
+Standalone on the host (first install, or without cn-home): `kauket get kaiser.cn_observability_env`, `./setup.sh` (fetches the root CA, renders the Alertmanager/Promtail/SNMP templates), `docker compose -p cn-observability up -d`. On a brand-new host `kauket request kaiser.cn_observability_env` first and approve it from the Mac.
+
+To change a value: `kauket get kaiser.cn_observability_env --stdout > <file outside git>` on the Mac, edit, `kauket add kaiser.cn_observability_env <file> --force`, redeploy. `kauket get` refuses a destination that was edited in place — fix the store, not the host. A refreshed `.env` recreates every service that reads it on the next `up -d` (today only Grafana reads the OIDC pair; the rest are rendered into files).
+
+### Grafana SSO: "The client identifier (client_id) is missing or invalid"
+
+Authentik shows this when the pair in `.env` (`AUTHENTIK_GRAFANA_CLIENT_ID` / `_SECRET`) is not the `grafana` provider's current pair. The same provider serves the VPS Grafana (`vps.cn_root_docker_env`), so the two secrets must carry identical values. Check without logging in:
+
+```sh
+u=$(curl -sk -o /dev/null -w '%{redirect_url}' https://grafana.kaiser.lan/login/generic_oauth)
+curl -sk -o /dev/null -w '%{http_code} %{redirect_url}\n' "$u"   # 302 → /flows/-/default/authentication/ is healthy; 400 is the drift
+```
+
+Fix: take the pair from the provider (`GET /api/v3/providers/oauth2/?name=grafana` on neptune) or from `vps.cn_root_docker_env`, update `kaiser.cn_observability_env` as above, redeploy. History: this recurred three times in 2026 because the deploy used to scp a stale workstation `.env` over the host copy; Kauket ownership (2026-11-07) removed that path.
 
 ## Layout
 
