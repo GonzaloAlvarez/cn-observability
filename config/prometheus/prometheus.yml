@@ -98,6 +98,8 @@ scrape_configs:
           # name (step-ca leaf via cn-home traefik-lan → ts-llmrouter :4000);
           # liveliness is unauthenticated (the router has no key by design).
           - https://llmrouter.lab.gn.al/health/liveliness
+          # cn-devices — UpSnap health (unauthenticated), LAN copy served by traefik-lan
+          - https://devices.lab.gn.al/api/health
           # cn-mzfxa + cn-mzsync on neptune.lan
           - https://accounts.fxa.neptune.lan
           - https://api.fxa.neptune.lan
